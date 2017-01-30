@@ -45,7 +45,7 @@ def tools_from_accounting(days):
         if int(job['end_time']) < cutoff:
             continue
         if 'release=precise' in job['category'] and job['owner'] not in tools:
-            tools.add(job['owner'])
+            tools.add(normalize_toolname(job['owner']))
     return tools
 
 
@@ -70,6 +70,12 @@ def tools_from_grid():
     for host, info in grid_info.iteritems():
         if is_precise_host(host):
             if info['jobs']:
-                tools.extend([
-                    job['job_owner'] for job in info['jobs'].values()])
+                tools.extend([normalize_toolname(job['job_owner'])
+                              for job in info['jobs'].values()])
     return tools
+
+
+def normalize_toolname(name):
+    if name.startswith('tools.'):
+        return name[6:]
+    # else None -- we ignore non-tool accounts like 'root'

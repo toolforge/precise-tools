@@ -31,7 +31,7 @@ def home():
         precise_tools.tools_from_accounting(7),
         precise_tools.tools_from_grid()
     )
-    return flask.render_template('home.html', tools=tools)
+    return flask.render_template('home.html', tools=filter(None, tools))
 
 
 if __name__ == '__main__':

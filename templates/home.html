@@ -2,8 +2,8 @@
 {% block body %}
 <h1>Tools running jobs on Precise OGE hosts in last 7 days</h1>
 <ul>
-    {% for tool in tools %}
-    <li>{{ tool }}</li>
+    {% for tool in tools|sort %}
+    <li><a href="//tools.wmflabs.org/?tool={{ tool|urlencode }}">{{ tool }}<a></li>
     {% endfor %}
 </ul>
 {% endblock %}
