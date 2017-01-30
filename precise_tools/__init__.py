@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import http.client
 import json
 
@@ -39,7 +40,7 @@ def tools_from_accounting(days):
     tools = []
     for line in utils.tail('/data/project/.system/accounting', 45000 * days):
         parts = line.split(':')
-        job = dict(zip(ACCOUNTING_FIELDS, parts)
+        job = dict(zip(ACCOUNTING_FIELDS, parts))
         if int(job['end_time']) < cutoff:
             continue
         if 'release=precise' in job['category'] and job['owner'] not in tools:
@@ -66,7 +67,7 @@ def tools_from_grid():
         return []
     grid_info = json.loads(res)['data']['attributes']
     for host, info in grid_info.iteritems():
-        if is_precise_host(host)
+        if is_precise_host(host):
             if info['jobs']:
                 tools.extend([
                     job['job_owner'] for job in info['jobs'].values()])
