@@ -19,7 +19,7 @@
 
 import flask
 
-from . import jobs
+import precise_tools
 
 
 app = flask.Flask(__name__)
@@ -27,7 +27,10 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def home():
-    tools = set().union(jobs.tools_from_accounting(7), jobs.tools_from_grid())
+    tools = set().union(
+        precise_tools.tools_from_accounting(7),
+        precise_tools.tools_from_grid()
+    )
     return flask.render_template('home.html', tools=tools)
 
 
