@@ -35,17 +35,20 @@ ACCOUNTING_FIELDS = [
 
 
 def tools_from_accounting(days):
-    delta = datetime.timedelta(days=days)
-    cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
-    tools = set()
-    for line in utils.lines_in_last_n_bytes('/data/project/.system/accounting',
-                                            400 * 45000 * days):
-        parts = line.split(':')
-        job = dict(zip(ACCOUNTING_FIELDS, parts))
-        if int(job['end_time']) < cutoff:
-            continue
-        if 'release=precise' in job['category'] and job['owner'] not in tools:
-            tools.add(normalize_toolname(job['owner']))
+    tools = utils.load_redis('accounting')
+    if tools is None:
+        delta = datetime.timedelta(days=days)
+        cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
+        tools = set()
+        for line in utils.tail_lines('/data/project/.system/accounting',
+                                     400 * 45000 * days):
+            parts = line.split(':')
+            job = dict(zip(ACCOUNTING_FIELDS, parts))
+            if int(job['end_time']) < cutoff:
+                continue
+            if 'release=precise' in job['category']:
+                tools.add(normalize_toolname(job['owner']))
+        utils.save_redis('accounting', tools)
     return tools
 
 
@@ -55,23 +58,26 @@ def is_precise_host(hostname):
 
 
 def tools_from_grid():
-    tools = []
-    conn = httplib.HTTPConnection('tools.wmflabs.org')
-    conn.request(
-        'GET', '/gridengine-status',
-        headers={
-            'User-Agent': 'https://tools.wmflabs.org/precise-tools/'
-        }
-    )
-    res = conn.getresponse().read()
-    if not res:
-        return []
-    grid_info = json.loads(res)['data']['attributes']
-    for host, info in grid_info.iteritems():
-        if is_precise_host(host):
-            if info['jobs']:
-                tools.extend([normalize_toolname(job['job_owner'])
-                              for job in info['jobs'].values()])
+    tools = utils.load_redis('grid')
+    if tools is None:
+        tools = []
+        conn = httplib.HTTPConnection('tools.wmflabs.org')
+        conn.request(
+            'GET', '/gridengine-status',
+            headers={
+                'User-Agent': 'https://tools.wmflabs.org/precise-tools/'
+            }
+        )
+        res = conn.getresponse().read()
+        if not res:
+            return []
+        grid_info = json.loads(res)['data']['attributes']
+        for host, info in grid_info.iteritems():
+            if is_precise_host(host):
+                if info['jobs']:
+                    tools.extend([normalize_toolname(job['job_owner'])
+                                  for job in info['jobs'].values()])
+        utils.save_redis('grid', tools)
     return tools
 
 

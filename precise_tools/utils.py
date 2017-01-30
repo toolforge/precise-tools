@@ -18,11 +18,23 @@
 
 from __future__ import division
 
-import os
 import datetime
+import json
+import os
+
+from redis import Redis
+
+# set to True to load/save data to a redis cache
+# False for real-time data (ease debugging)
+USE_CACHE = False
+
+REDIS_CONNECTION = Redis(host='tools-redis')
+
+with open(os.path.expanduser('~/redis-prefix.conf'), 'r') as f:
+    REDIS_PREFIX = f.read()
 
 
-def lines_in_last_n_bytes(filename, nbytes):
+def tail_lines(filename, nbytes):
     """Get lines from last n bytes from the filename as an iterator."""
     with open(filename, 'r') as f:
         f.seek(-nbytes, os.SEEK_END)
@@ -43,3 +55,17 @@ def totimestamp(dt, epoch=None):
         epoch = datetime.datetime(1970, 1, 1)
     td = dt - epoch
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
+
+
+def load_redis(key):
+    if USE_CACHE:  # set to True to load/save data to a redis cache
+        try:
+            return json.loads(REDIS_CONNECTION.get(REDIS_PREFIX+key) or '')
+        except ValueError:
+            return None
+
+
+def save_redis(key, data, expiry=3600):
+    if USE_CACHE:  # set to True to load/save data to a redis cache
+        REDIS_CONNECTION.set(REDIS_PREFIX+key, json.dumps(data))
+        REDIS_CONNECTION.expire(REDIS_PREFIX+key, expiry)
