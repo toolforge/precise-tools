@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 #
 # This file is part of precise-tools
@@ -17,21 +16,25 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import flask
-
-from . import jobs
+import subprocess
 
 
-app = flask.Flask(__name__)
+def tail(filename, lines):
+    """Get last n lines from the filename as an iterator."""
+    # Inspired by http://stackoverflow.com/a/4418193/8171
+    cmd = ['tail', '-%d' % lines, filename]
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while True:
+        line = proc.stdout.readline()
+        if line == '' and proc.poll() is not None:
+            break
+        yield line
 
-
-@app.route('/')
-def home():
-    tools = set().union(jobs.tools_from_accounting(7), jobs.tools_from_grid())
-    return flask.render_template('home.html', tools=tools)
-
-
-if __name__ == '__main__':
-    app.run()
-
-# vim:sw=4:ts=4:sts=4:et:
+    if proc.returncode == 0:
+        raise StopIteration
+    else:
+        raise subprocess.CalledProcessError(
+            returncode=proc.returncode,
+            command=' '.join(cmd)
+        )

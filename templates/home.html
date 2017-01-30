@@ -1,4 +1,9 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1>Hello world</h1>
+<h1>Tools running jobs on Precise OGE hosts in last 7 days</h1>
+<ul>
+    {% for tool in tools %}
+    <li>{{ tool }}</li>
+    {% endfor %}
+</ul>
 {% endblock %}
