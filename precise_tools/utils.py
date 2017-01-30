@@ -17,29 +17,23 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+
+import os
 import datetime
-import subprocess
 
 
-def tail(filename, lines):
-    """Get last n lines from the filename as an iterator."""
-    # Inspired by http://stackoverflow.com/a/4418193/8171
-    cmd = ['tail', '-%d' % lines, filename]
-    proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while True:
-        line = proc.stdout.readline()
-        if line == '' and proc.poll() is not None:
-            break
-        yield line
+def lines_in_last_n_bytes(filename, nbytes):
+    """Get lines from last n bytes from the filename as an iterator."""
+    with open(filename, 'r') as f:
+        f.seek(-nbytes, os.SEEK_END)
 
-    if proc.returncode == 0:
-        raise StopIteration
-    else:
-        raise subprocess.CalledProcessError(
-            returncode=proc.returncode,
-            command=' '.join(cmd)
-        )
+        # Ignore first line as it may be only part of a line
+        f.readline()
+
+        # We can't simply `return f` as the returned f will be closed
+        # Do all the IO within this function
+        for line in f:
+            yield line
 
 
 def totimestamp(dt, epoch=None):

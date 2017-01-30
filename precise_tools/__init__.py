@@ -38,7 +38,8 @@ def tools_from_accounting(days):
     delta = datetime.timedelta(days=days)
     cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
     tools = []
-    for line in utils.tail('/data/project/.system/accounting', 45000 * days):
+    for line in utils.lines_in_last_n_bytes('/data/project/.system/accounting',
+                                            400 * 45000 * days):
         parts = line.split(':')
         job = dict(zip(ACCOUNTING_FIELDS, parts))
         if int(job['end_time']) < cutoff:
