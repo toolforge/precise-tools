@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+import traceback
+
 import flask
 
 import precise_tools
@@ -27,12 +30,15 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def home():
-    tools = set().union(
-        precise_tools.tools_from_accounting(7),
-        precise_tools.tools_from_grid()
-    )
-    return flask.render_template('home.html', tools=filter(None, tools))
-
+    try:
+        tools = set().union(
+            precise_tools.tools_from_accounting(7),
+            precise_tools.tools_from_grid()
+        )
+        return flask.render_template('home.html', tools=filter(None, tools))
+    except Exception:
+        traceback.print_exc()
+        raise
 
 if __name__ == '__main__':
     app.run()
