@@ -48,7 +48,7 @@ def tools_from_accounting(days):
                 continue
             if 'release=precise' in job['category']:
                 tools.add(normalize_toolname(job['owner']))
-        utils.save_redis('accounting', tools)
+        utils.save_redis('accounting', list(tools))
     return tools
 
 
