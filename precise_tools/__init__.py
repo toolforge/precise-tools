@@ -36,7 +36,7 @@ ACCOUNTING_FIELDS = [
 
 def tools_from_accounting(days):
     delta = datetime.timedelta(days=days)
-    cutoff = (datetime.datetime.now() - delta).timestamp()
+    cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
     tools = []
     for line in utils.tail('/data/project/.system/accounting', 45000 * days):
         parts = line.split(':')

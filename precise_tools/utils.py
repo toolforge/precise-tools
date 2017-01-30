@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+import datetime
 import subprocess
 
 
@@ -38,3 +40,12 @@ def tail(filename, lines):
             returncode=proc.returncode,
             command=' '.join(cmd)
         )
+
+
+def totimestamp(dt, epoch=None):
+    """Convert a datetime to unix epoch seconds."""
+    # From http://stackoverflow.com/a/8778548/8171
+    if epoch is None:
+        epoch = datetime.datetime(1970, 1, 1)
+    td = dt - epoch
+    return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
