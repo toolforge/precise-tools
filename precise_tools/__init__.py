@@ -17,7 +17,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import http.client
+import httplib
 import json
 
 from . import utils
@@ -55,7 +55,7 @@ def is_precise_host(hostname):
 
 def tools_from_grid():
     tools = []
-    conn = http.client.HTTPConnection('tools.wmflabs.org')
+    conn = httplib.HTTPConnection('tools.wmflabs.org')
     conn.request(
         'GET', '/gridengine-status',
         headers={
