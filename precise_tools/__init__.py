@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import datetime
 import httplib
 import json
@@ -37,11 +38,13 @@ CACHE = utils.Cache()
 
 
 def tools_from_accounting(days):
+    """Get a list of (tool, job name, count, last) tuples for jobs running on
+    precise exec nodes in the last N days."""
     tools = CACHE.load('accounting')
     if tools is None:
         delta = datetime.timedelta(days=days)
         cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
-        tools = set()
+        jobs = collections.defaultdict(lambda: collections.defaultdict(list))
         for line in utils.tail_lines(
                 '/data/project/.system/accounting', 400 * 45000 * days):
             parts = line.split(':')
@@ -49,8 +52,20 @@ def tools_from_accounting(days):
             if int(job['end_time']) < cutoff:
                 continue
             if 'release=precise' in job['category']:
-                tools.add(normalize_toolname(job['owner']))
-        CACHE.save('accounting', list(tools))
+                tool = normalize_toolname(job['owner'])
+                if tool is not None:
+                    jobs[tool][job['job_name']].append(job['end_time'])
+
+        tools = [
+            (
+                tool_name,
+                job_name,
+                len(jobs[tool_name][job_name]),
+                datetime.datetime.fromtimestamp(max(jobs[tool_name][job_name]))
+            )
+            for tool_name in jobs for job_name in jobs[tool_name]
+        ]
+        CACHE.save('accounting', tools)
     return tools
 
 
@@ -60,9 +75,12 @@ def is_precise_host(hostname):
 
 
 def tools_from_grid():
+    """Get a list of (tool, job name, count, last) tuples for jobs running on
+    precise exec nodes currently."""
     tools = CACHE.load('grid')
     if tools is None:
         tools = []
+        now = datetime.datetime.now()
         conn = httplib.HTTPConnection('tools.wmflabs.org')
         conn.request(
             'GET', '/gridengine-status',
@@ -77,8 +95,15 @@ def tools_from_grid():
         for host, info in grid_info.iteritems():
             if is_precise_host(host):
                 if info['jobs']:
-                    tools.extend([normalize_toolname(job['job_owner'])
-                                  for job in info['jobs'].values()])
+                    tools.extend([
+                        (
+                            normalize_toolname(job['job_owner']),
+                            job['job_name'],
+                            1,
+                            now
+                        )
+                        for job in info['jobs'].values()
+                    ])
         CACHE.save('grid', tools)
     return tools
 

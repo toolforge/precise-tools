@@ -31,10 +31,50 @@ app = flask.Flask(__name__)
 @app.route('/')
 def home():
     try:
-        tools = set().union(
-            precise_tools.tools_from_accounting(7),
-            precise_tools.tools_from_grid()
-        )
+        # tools will be a structure something like:
+        # {
+        #   'tool A': {
+        #       'job X': {
+        #           'count': N,
+        #           'last': datetime,
+        #       },
+        #       'job Y': {
+        #           'count': N,
+        #           'last': datetime,
+        #       },
+        #       ...
+        #   },
+        #   ...
+        # }
+        tools = {
+            rec[0]: {
+                rec[1]: {
+                    'count': rec[2],
+                    'last': rec[3]
+                }
+            }
+            for rec in precise_tools.tools_from_accounting(7)
+        }
+
+        for rec in precise_tools.tools_from_grid():
+            if rec[0] not in tools:
+                tools[rec[0]] = {
+                    rec[1]: {
+                        'count': rec[2],
+                        'last': rec[3]
+                    }
+                }
+            elif rec[1] not in tools[rec[0]]:
+                tools[rec[0]][rec[1]] = {
+                    'count': rec[2],
+                    'last': rec[3]
+                }
+            else:
+                tools[rec[0]][rec[1]]['count'] += rec[2]
+                tools[rec[0]][rec[1]]['last'] = max(
+                    tools[rec[0]][rec[1]]['last'], rec[3]
+                )
+
         return flask.render_template('home.html', tools=filter(None, tools))
     except Exception:
         traceback.print_exc()
