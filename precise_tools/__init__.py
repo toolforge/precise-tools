@@ -56,15 +56,15 @@ def tools_from_accounting(days):
                 if tool is not None:
                     jobs[tool][job['job_name']].append(job['end_time'])
 
-        tools = [
-            (
-                tool_name,
-                job_name,
-                len(jobs[tool_name][job_name]),
-                datetime.datetime.fromtimestamp(max(jobs[tool_name][job_name]))
-            )
-            for tool_name in jobs for job_name in jobs[tool_name]
-        ]
+        tools = []
+        for tool_name, tool_jobs in jobs.iteritems():
+            for job_name, job_starts in tool_jobs.iteritems():
+                tools.append((
+                    tool_name,
+                    job_name,
+                    len(job_starts),
+                    datetime.datetime.fromtimestamp(max(job_starts))
+                ))
         CACHE.save('accounting', tools)
     return tools
 
