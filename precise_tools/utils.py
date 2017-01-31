@@ -22,16 +22,32 @@ import datetime
 import json
 import os
 
-from redis import Redis
+import redis
 
-# set to True to load/save data to a redis cache
-# False for real-time data (ease debugging)
-USE_CACHE = False
 
-REDIS_CONNECTION = Redis(host='tools-redis')
+class Cache(object):
+    def __init__(self, enabled=True):
+        self.enabled = enabled
+        self.conn = redis.Redis(host='tools-redis')
+        with open(os.path.expanduser('~/redis-prefix.conf'), 'r') as f:
+            self.prefix = f.read()
 
-with open(os.path.expanduser('~/redis-prefix.conf'), 'r') as f:
-    REDIS_PREFIX = f.read()
+    def key(self, val):
+        return '%s%s' % (self.prefix, val)
+
+    def load(self, key):
+        if self.enabled:
+            try:
+                return json.loads(self.conn.get(self.key(key)) or '')
+            except ValueError:
+                return None
+        else:
+            return None
+
+    def save(self, key, data, expiry=3600):
+        if self.enabled:
+            real_key = self.key(key)
+            self.conn.set(real_key, json.dumps(data))
 
 
 def tail_lines(filename, nbytes):
@@ -55,17 +71,3 @@ def totimestamp(dt, epoch=None):
         epoch = datetime.datetime(1970, 1, 1)
     td = dt - epoch
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
-
-
-def load_redis(key):
-    if USE_CACHE:  # set to True to load/save data to a redis cache
-        try:
-            return json.loads(REDIS_CONNECTION.get(REDIS_PREFIX+key) or '')
-        except ValueError:
-            return None
-
-
-def save_redis(key, data, expiry=3600):
-    if USE_CACHE:  # set to True to load/save data to a redis cache
-        REDIS_CONNECTION.set(REDIS_PREFIX+key, json.dumps(data))
-        REDIS_CONNECTION.expire(REDIS_PREFIX+key, expiry)

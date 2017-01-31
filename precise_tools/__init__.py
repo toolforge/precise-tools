@@ -33,22 +33,24 @@ ACCOUNTING_FIELDS = [
     'category', 'iow', 'pe_taskid', 'maxvemem', 'arid', 'ar_submission_time',
 ]
 
+CACHE = utils.Cache()
+
 
 def tools_from_accounting(days):
-    tools = utils.load_redis('accounting')
+    tools = CACHE.load('accounting')
     if tools is None:
         delta = datetime.timedelta(days=days)
         cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
         tools = set()
-        for line in utils.tail_lines('/data/project/.system/accounting',
-                                     400 * 45000 * days):
+        for line in utils.tail_lines(
+                '/data/project/.system/accounting', 400 * 45000 * days):
             parts = line.split(':')
             job = dict(zip(ACCOUNTING_FIELDS, parts))
             if int(job['end_time']) < cutoff:
                 continue
             if 'release=precise' in job['category']:
                 tools.add(normalize_toolname(job['owner']))
-        utils.save_redis('accounting', list(tools))
+        CACHE.save('accounting', list(tools))
     return tools
 
 
@@ -58,7 +60,7 @@ def is_precise_host(hostname):
 
 
 def tools_from_grid():
-    tools = utils.load_redis('grid')
+    tools = CACHE.load('grid')
     if tools is None:
         tools = []
         conn = httplib.HTTPConnection('tools.wmflabs.org')
@@ -77,7 +79,7 @@ def tools_from_grid():
                 if info['jobs']:
                     tools.extend([normalize_toolname(job['job_owner'])
                                   for job in info['jobs'].values()])
-        utils.save_redis('grid', tools)
+        CACHE.save('grid', tools)
     return tools
 
 
