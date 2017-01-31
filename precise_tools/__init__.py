@@ -54,7 +54,7 @@ def tools_from_accounting(days):
             if 'release=precise' in job['category']:
                 tool = normalize_toolname(job['owner'])
                 if tool is not None:
-                    jobs[tool][job['job_name']].append(job['end_time'])
+                    jobs[tool][job['job_name']].append(int(job['end_time']))
 
         tools = []
         for tool_name, tool_jobs in jobs.iteritems():
