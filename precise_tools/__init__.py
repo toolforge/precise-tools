@@ -53,27 +53,27 @@ def tools_from_accounting(days):
             if int(job['end_time']) < cutoff:
                 continue
 
-            tool = job['owner']
-            if 'release=precise' in job['category']:
-                jobs[tool][job['job_name']].append(int(job['end_time']))
-            else:
-                try:
-                    del jobs[tool][job['job_name']]
-                except KeyError:
-                    # defaultdict does not prevent KeyError on del
-                    pass
+            tool = normalize_toolname(job['owner'])
+            jobname = normalize_jobname(job['job_name'])
+            if tool is not None:
+                if 'release=precise' in job['category']:
+                    jobs[tool][jobname].append(int(job['end_time']))
+                else:
+                    try:
+                        del jobs[tool][jobname]
+                    except KeyError:
+                        # defaultdict does not prevent KeyError on del
+                        pass
 
         tools = []
         for tool_name, tool_jobs in jobs.iteritems():
-            tool_name = normalize_toolname(tool_name)
-            if tool_name is not None:
-                for job_name, job_starts in tool_jobs.iteritems():
-                    tools.append((
-                        tool_name,
-                        normalize_jobname(job_name),
-                        len(job_starts),
-                        max(job_starts)
-                    ))
+            for job_name, job_starts in tool_jobs.iteritems():
+                tools.append((
+                    tool_name,
+                    job_name,
+                    len(job_starts),
+                    max(job_starts)
+                ))
         CACHE.save('accounting', tools)
     return tools
 
