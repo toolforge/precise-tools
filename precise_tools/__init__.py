@@ -123,7 +123,7 @@ def tools_members(tools):
     {'musikbot': ['musikanimal'],
      'ifttt': ['slaporte', 'mahmoud', 'madhuvishy', 'ori']}
     """
-    tool_to_members = collections.defaultdict(set)
+    tool_to_members = {}
     with utils.ldap_conn() as conn:
         for tool in tools:
             conn.search(
@@ -135,6 +135,7 @@ def tools_members(tools):
             )
             for resp in conn.response:
                 attributes = resp.get('attributes')
-                for member in attributes.get('member', []):
-                    tool_to_members[tool].add(utils.uid_from_dn(member))
+                tool_to_members[tool] = set([
+                    utils.uid_from_dn(member)
+                    for member in attributes.get('member', [])])
     return tool_to_members
