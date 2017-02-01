@@ -1,4 +1,4 @@
 flask
 ldap3
 redis
-yaml
+pyyaml
