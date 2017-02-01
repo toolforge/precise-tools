@@ -20,7 +20,6 @@ import collections
 import datetime
 import httplib
 import json
-import time
 
 from . import utils
 
@@ -88,7 +87,6 @@ def tools_from_grid():
     tools = CACHE.load('grid')
     if tools is None:
         tools = []
-        now = time.time()
         conn = httplib.HTTPConnection('tools.wmflabs.org')
         conn.request(
             'GET', '/gridengine-status',
@@ -107,8 +105,6 @@ def tools_from_grid():
                         (
                             normalize_toolname(job['job_owner']),
                             job['job_name'],
-                            1,
-                            now
                         )
                         for job in info['jobs'].values()
                     ])
