@@ -171,15 +171,16 @@ def get_view_data(days=7, cached=True):
             },
         }
     """
-    tools = CACHE.load('maindict') if cached else None
-    if tools is None:
+    ctx = CACHE.load('maindict') if cached else None
+    if ctx is None:
         date_fmt = '%Y-%m-%d %H:%M'
         tools = collections.defaultdict(lambda: {
             'jobs': collections.defaultdict(lambda: {
                 'count': 0,
-                'last': ''}),
-            'members': []})
-        tools['generated'] = datetime.datetime.now().strftime(date_fmt)
+                'last': '',
+            }),
+            'members': [],
+        })
 
         for rec in tools_from_accounting(days):
             tools[rec[0]]['jobs'][rec[1]]['count'] += rec[2]
@@ -193,5 +194,9 @@ def get_view_data(days=7, cached=True):
         for key, val in tools_members(tools.keys()).items():
             tools[key]['members'] = list(val)
 
-        CACHE.save('maindict', tools)
-    return tools
+        ctx = {
+            'generated': datetime.datetime.now().strftime(date_fmt),
+            'tools': tools,
+        }
+        CACHE.save('maindict', ctx)
+    return ctx
