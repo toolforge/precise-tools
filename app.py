@@ -47,7 +47,8 @@ def home():
         #   },
         #   ...
         # }
-        tools = precise_tools.CACHE.load('maindict')
+        purge = 'purge' in flask.request.args
+        tools = None if purge else precise_tools.CACHE.load('maindict')
         if tools is None:
             tools = collections.defaultdict(
                 lambda: collections.defaultdict(lambda: {
