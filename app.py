@@ -59,16 +59,17 @@ def home():
         if tools is None:
             tools = collections.defaultdict(lambda: {
                 'jobs': collections.defaultdict(lambda: {
-                    'count': 1,
+                    'count': 0,
                     'last': ''}),
                 'members': []})
 
             for rec in precise_tools.tools_from_accounting(7):
-                tools[rec[0]]['jobs'][rec[1]]['count'] = rec[2]
+                tools[rec[0]]['jobs'][rec[1]]['count'] += rec[2]
                 tools[rec[0]]['jobs'][rec[1]]['last'] = (
                     datetime.datetime.fromtimestamp(
                         rec[3]).strftime('%Y-%m-%d %H:%M'))
             for rec in precise_tools.tools_from_grid():
+                tools[rec[0]]['jobs'][rec[1]]['count'] += 1
                 tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
 
             for key, val in precise_tools.tools_members(tools.keys()).items():
