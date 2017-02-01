@@ -47,19 +47,23 @@ def home():
         #   },
         #   ...
         # }
-        tools = collections.defaultdict(
-            lambda: collections.defaultdict(lambda: {
-                'count': 1,
-                'last': None
-            }))
+        tools = precise_tools.CACHE.load('maindict')
+        if tools is None:
+            tools = collections.defaultdict(
+                lambda: collections.defaultdict(lambda: {
+                    'count': 1,
+                    'last': None
+                }))
 
-        for rec in precise_tools.tools_from_accounting(7):
-            tools[rec[0]][rec[1]]['count'] = rec[2]
-            tools[rec[0]][rec[1]]['last'] = datetime.datetime.fromtimestamp(
-                rec[3]).strftime('%Y-%m-%d %H:%M')
+            for rec in precise_tools.tools_from_accounting(7):
+                tools[rec[0]][rec[1]]['count'] = rec[2]
+                tools[rec[0]][rec[1]]['last'] = (
+                    datetime.datetime.fromtimestamp(
+                        rec[3]).strftime('%Y-%m-%d %H:%M'))
 
-        for rec in precise_tools.tools_from_grid():
-            tools[rec[0]][rec[1]]['last'] = 'Currently running'
+            for rec in precise_tools.tools_from_grid():
+                tools[rec[0]][rec[1]]['last'] = 'Currently running'
+            precise_tools.CACHE.save('maindict', tools)
 
         return flask.render_template('home.html', tools=tools)
     except Exception:

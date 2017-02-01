@@ -40,40 +40,36 @@ CACHE = utils.Cache()
 def tools_from_accounting(days):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
     precise exec nodes in the last N days."""
-    tools = CACHE.load('accounting')
-    if tools is None:
-        delta = datetime.timedelta(days=days)
-        cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
-        jobs = collections.defaultdict(lambda: collections.defaultdict(list))
-        for line in utils.tail_lines(
-                '/data/project/.system/accounting', 400 * 45000 * days):
-            parts = line.split(':')
-            job = dict(zip(ACCOUNTING_FIELDS, parts))
-            if int(job['end_time']) < cutoff:
-                continue
+    delta = datetime.timedelta(days=days)
+    cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
+    jobs = collections.defaultdict(lambda: collections.defaultdict(list))
+    for line in utils.tail_lines(
+            '/data/project/.system/accounting', 400 * 45000 * days):
+        parts = line.split(':')
+        job = dict(zip(ACCOUNTING_FIELDS, parts))
+        if int(job['end_time']) < cutoff:
+            continue
 
-            tool = normalize_toolname(job['owner'])
-            if tool is not None:
-                if 'release=precise' in job['category']:
-                    jobs[tool][job['job_name']].append(int(job['end_time']))
-                else:
-                    try:
-                        del jobs[tool][job['job_name']]
-                    except KeyError:
-                        # defaultdict does not prevent KeyError on del
-                        pass
+        tool = normalize_toolname(job['owner'])
+        if tool is not None:
+            if 'release=precise' in job['category']:
+                jobs[tool][job['job_name']].append(int(job['end_time']))
+            else:
+                try:
+                    del jobs[tool][job['job_name']]
+                except KeyError:
+                    # defaultdict does not prevent KeyError on del
+                    pass
 
-        tools = []
-        for tool_name, tool_jobs in jobs.iteritems():
-            for job_name, job_starts in tool_jobs.iteritems():
-                tools.append((
-                    tool_name,
-                    job_name,
-                    len(job_starts),
-                    max(job_starts)
-                ))
-        CACHE.save('accounting', tools)
-    return tools
+    tools = []
+    for tool_name, tool_jobs in jobs.iteritems():
+        for job_name, job_starts in tool_jobs.iteritems():
+            tools.append((
+                tool_name,
+                job_name,
+                len(job_starts),
+                max(job_starts)
+            ))
 
 
 def is_precise_host(hostname):
@@ -84,31 +80,28 @@ def is_precise_host(hostname):
 def tools_from_grid():
     """Get a list of (tool, job name, count, last) tuples for jobs running on
     precise exec nodes currently."""
-    tools = CACHE.load('grid')
-    if tools is None:
-        tools = []
-        conn = httplib.HTTPConnection('tools.wmflabs.org')
-        conn.request(
-            'GET', '/gridengine-status',
-            headers={
-                'User-Agent': 'https://tools.wmflabs.org/precise-tools/'
-            }
-        )
-        res = conn.getresponse().read()
-        if not res:
-            return []
-        grid_info = json.loads(res)['data']['attributes']
-        for host, info in grid_info.iteritems():
-            if is_precise_host(host):
-                if info['jobs']:
-                    tools.extend([
-                        (
-                            normalize_toolname(job['job_owner']),
-                            job['job_name'],
-                        )
-                        for job in info['jobs'].values()
-                    ])
-        CACHE.save('grid', tools)
+    tools = []
+    conn = httplib.HTTPConnection('tools.wmflabs.org')
+    conn.request(
+        'GET', '/gridengine-status',
+        headers={
+            'User-Agent': 'https://tools.wmflabs.org/precise-tools/'
+        }
+    )
+    res = conn.getresponse().read()
+    if not res:
+        return []
+    grid_info = json.loads(res)['data']['attributes']
+    for host, info in grid_info.iteritems():
+        if is_precise_host(host):
+            if info['jobs']:
+                tools.extend([
+                    (
+                        normalize_toolname(job['job_owner']),
+                        job['job_name'],
+                    )
+                    for job in info['jobs'].values()
+                ])
     return tools
 
 
