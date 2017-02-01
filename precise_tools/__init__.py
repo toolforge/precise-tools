@@ -139,3 +139,59 @@ def tools_members(tools):
                     utils.uid_from_dn(member)
                     for member in attributes.get('member', [])])
     return tool_to_members
+
+
+def get_view_data(days=7, cached=True):
+    """Get a structured collection of data about tools that are running on
+    precise grid nodes.
+
+    Return value will be a structure something like:
+        {
+            'generated': datetime,
+            'tools': {
+                'tool A': {
+                    'jobs': {
+                        'job X': {
+                            'count': N,
+                            'last': datetime,
+                        },
+                        'job Y': {
+                            'count': N,
+                            'last': datetime,
+                        },
+                        ...
+                    },
+                    'members': [
+                        'user A',
+                        'user B',
+                        ...
+                    ]
+                },
+                ...
+            },
+        }
+    """
+    tools = CACHE.load('maindict') if cached else None
+    if tools is None:
+        date_fmt = '%Y-%m-%d %H:%M'
+        tools = collections.defaultdict(lambda: {
+            'jobs': collections.defaultdict(lambda: {
+                'count': 0,
+                'last': ''}),
+            'members': []})
+        tools['generated'] = datetime.datetime.now().strftime(date_fmt)
+
+        for rec in tools_from_accounting(days):
+            tools[rec[0]]['jobs'][rec[1]]['count'] += rec[2]
+            tools[rec[0]]['jobs'][rec[1]]['last'] = (
+                datetime.datetime.fromtimestamp(rec[3]).strftime(date_fmt))
+
+        for rec in tools_from_grid():
+            tools[rec[0]]['jobs'][rec[1]]['count'] += 1
+            tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
+
+        for key, val in tools_members(tools.keys()).items():
+            tools[key]['members'] = list(val)
+
+        CACHE.save('maindict', tools)
+    return tools
