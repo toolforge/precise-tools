@@ -54,7 +54,7 @@ def tools_from_accounting(days):
                 continue
 
             tool = normalize_toolname(job['owner'])
-            jobname = normalize_jobname(job['job_name'])
+            jobname = normalize_jobname(tool, job['job_name'])
             if tool is not None:
                 if 'release=precise' in job['category']:
                     jobs[tool][jobname].append(int(job['end_time']))
@@ -104,15 +104,15 @@ def tools_from_grid():
         for host, info in grid_info.iteritems():
             if is_precise_host(host):
                 if info['jobs']:
-                    tools.extend([
-                        (
-                            normalize_toolname(job['job_owner']),
-                            normalize_jobname(job['job_name']),
+                    for job in info['jobs'].values():
+                        tool = normalize_toolname(job['job_owner'])
+                        jobname = normalize_jobname(tool, job['job_name'])
+                        tools.append((
+                            tool,
+                            jobname,
                             1,
                             now
-                        )
-                        for job in info['jobs'].values()
-                    ])
+                        ))
         CACHE.save('grid', tools)
     return tools
 
