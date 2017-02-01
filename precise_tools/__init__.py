@@ -129,7 +129,7 @@ def tools_members(tools):
             conn.search(
                 'ou=servicegroups,dc=wikimedia,dc=org',
                 '(cn=tools.{})'.format(tool),
-                ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
+                ldap3.SUBTREE,
                 attributes=['member', 'cn'],
                 time_limit=5
             )

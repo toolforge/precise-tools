@@ -83,7 +83,7 @@ def ldap_conn():
     servers = ldap3.ServerPool([
         ldap3.Server('ldap-labs.eqiad.wikimedia.org'),
         ldap3.Server('ldap-labs.codfw.wikimedia.org'),
-    ], ldap3.POOLING_STRATEGY_ROUND_ROBIN, active=True, exhaust=True)
+    ], ldap3.ROUND_ROBIN, active=True, exhaust=True)
     return ldap3.Connection(servers,
                             read_only=True,
                             auto_bind=True)
