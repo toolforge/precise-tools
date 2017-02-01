@@ -1,6 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
 <h1>Tools running jobs on Precise OGE hosts in last 7 days</h1>
+
+<p>See <a href="https://wikitech.wikimedia.org/wiki/Tools_Precise_deprecation">Tools Precise deprecation</a> for information on migrating your tool off of Precise before the 2017-03-06 deadline.</p>
+
+<p>Total tools still running on Precise: <strong>{{ tools|count }}</strong></p>
+
 <table id="precise">
   <thead>
     <tr>
