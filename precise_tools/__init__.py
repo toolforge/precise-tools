@@ -53,26 +53,27 @@ def tools_from_accounting(days):
             if int(job['end_time']) < cutoff:
                 continue
 
-            tool = normalize_toolname(job['owner'])
-            if tool is not None:
-                if 'release=precise' in job['category']:
-                    jobs[tool][job['job_name']].append(int(job['end_time']))
-                else:
-                    try:
-                        del jobs[tool][job['job_name']]
-                    except KeyError:
-                        # defaultdict does not prevent KeyError on del
-                        pass
+            tool = job['owner']
+            if 'release=precise' in job['category']:
+                jobs[tool][job['job_name']].append(int(job['end_time']))
+            else:
+                try:
+                    del jobs[tool][job['job_name']]
+                except KeyError:
+                    # defaultdict does not prevent KeyError on del
+                    pass
 
         tools = []
         for tool_name, tool_jobs in jobs.iteritems():
-            for job_name, job_starts in tool_jobs.iteritems():
-                tools.append((
-                    tool_name,
-                    job_name,
-                    len(job_starts),
-                    max(job_starts)
-                ))
+            tool_name = normalize_toolname(tool_name)
+            if tool_name is not None:
+                for job_name, job_starts in tool_jobs.iteritems():
+                    tools.append((
+                        tool_name,
+                        normalize_jobname(job_name),
+                        len(job_starts),
+                        max(job_starts)
+                    ))
         CACHE.save('accounting', tools)
     return tools
 
@@ -106,7 +107,7 @@ def tools_from_grid():
                     tools.extend([
                         (
                             normalize_toolname(job['job_owner']),
-                            job['job_name'],
+                            normalize_jobname(job['job_name']),
                             1,
                             now
                         )
@@ -120,3 +121,9 @@ def normalize_toolname(name):
     if name.startswith('tools.'):
         return name[6:]
     # else None -- we ignore non-tool accounts like 'root'
+
+
+def normalize_jobname(tool, job):
+    if job == 'lighttpd-precise-' + tool:
+        return 'lighttpd-' + tool
+    return job
