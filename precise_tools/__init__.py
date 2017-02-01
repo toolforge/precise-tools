@@ -52,10 +52,17 @@ def tools_from_accounting(days):
             job = dict(zip(ACCOUNTING_FIELDS, parts))
             if int(job['end_time']) < cutoff:
                 continue
-            if 'release=precise' in job['category']:
-                tool = normalize_toolname(job['owner'])
-                if tool is not None:
+
+            tool = normalize_toolname(job['owner'])
+            if tool is not None:
+                if 'release=precise' in job['category']:
                     jobs[tool][job['job_name']].append(int(job['end_time']))
+                else:
+                    try:
+                        del jobs[tool][job['job_name']]
+                    except KeyError:
+                        # defaultdict does not prevent KeyError on del
+                        pass
 
         tools = []
         for tool_name, tool_jobs in jobs.iteritems():
