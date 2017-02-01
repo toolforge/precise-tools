@@ -124,6 +124,6 @@ def normalize_toolname(name):
 
 
 def normalize_jobname(tool, job):
-    if job == 'lighttpd-precise-' + tool:
+    if tool and job == 'lighttpd-precise-' + tool:
         return 'lighttpd-' + tool
     return job
