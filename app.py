@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import datetime
 import traceback
 
 import flask
@@ -61,18 +61,19 @@ def home():
                 tools[rec[0]] = {
                     rec[1]: {
                         'count': rec[2],
-                        'last': rec[3]
+                        'last': datetime.datetime.fromtimestamp(rec[3])
                     }
                 }
             elif rec[1] not in tools[rec[0]]:
                 tools[rec[0]][rec[1]] = {
                     'count': rec[2],
-                    'last': rec[3]
+                    'last': datetime.datetime.fromtimestamp(rec[3])
                 }
             else:
                 tools[rec[0]][rec[1]]['count'] += rec[2]
                 tools[rec[0]][rec[1]]['last'] = max(
-                    tools[rec[0]][rec[1]]['last'], rec[3]
+                    tools[rec[0]][rec[1]]['last'],
+                    datetime.datetime.fromtimestamp(rec[3])
                 )
 
         return flask.render_template('home.html', tools=filter(None, tools))

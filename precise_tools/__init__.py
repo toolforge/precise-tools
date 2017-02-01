@@ -20,6 +20,7 @@ import collections
 import datetime
 import httplib
 import json
+import time
 
 from . import utils
 
@@ -63,7 +64,7 @@ def tools_from_accounting(days):
                     tool_name,
                     job_name,
                     len(job_starts),
-                    datetime.datetime.fromtimestamp(max(job_starts))
+                    max(job_starts)
                 ))
         CACHE.save('accounting', tools)
     return tools
@@ -80,7 +81,7 @@ def tools_from_grid():
     tools = CACHE.load('grid')
     if tools is None:
         tools = []
-        now = datetime.datetime.now()
+        now = time.time()
         conn = httplib.HTTPConnection('tools.wmflabs.org')
         conn.request(
             'GET', '/gridengine-status',
