@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 <h1>Tools running jobs on Precise OGE hosts in last 7 days</h1>
-<table>
+<table id="precise">
   <thead>
     <tr>
       <th>Tool</th>
@@ -13,14 +13,14 @@
   <tbody>
     {% for tool, jobs in tools|dictsort %}
     <tr>
-      <th rowspan="{{ jobs|count }}">
+      <td rowspan="{{ jobs|count }}" id="{{ tool }}" class="tool-name">
         <a href="//tools.wmflabs.org/?tool={{ tool|urlencode }}">{{ tool }}</a>
-      </th>
+      </td>
       {% for job, data in jobs|dictsort %}
         {% if not loop.first %}<tr>{% endif %}
-        <td>{{ job }}</td>
-        <td>{{ data.total }}</td>
-        <td>{{ data.last.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="job-name">{{ job }}</td>
+        <td class="seen">{{ data.count }}</td>
+        <td class="last">{{ data.last.strftime('%Y-%m-%d %H:%M') }}</td>
         {% if not loop.last %}</tr>{% endif %}
       {% endfor %}
     </tr>
