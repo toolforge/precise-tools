@@ -50,7 +50,7 @@ def tools_from_accounting(days):
         if int(job['end_time']) < cutoff:
             continue
 
-        tool = normalize_toolname(job['owner'])
+        tool = job['owner']
         if tool is not None:
             if 'release=precise' in job['category']:
                 jobs[tool][job['job_name']].append(int(job['end_time']))
@@ -63,13 +63,15 @@ def tools_from_accounting(days):
 
     tools = []
     for tool_name, tool_jobs in jobs.iteritems():
-        for job_name, job_starts in tool_jobs.iteritems():
-            tools.append((
-                tool_name,
-                job_name,
-                len(job_starts),
-                max(job_starts)
-            ))
+        tool_name = normalize_toolname(tool_name)
+        if tool_name is not None:
+            for job_name, job_starts in tool_jobs.iteritems():
+                tools.append((
+                    tool_name,
+                    job_name,
+                    len(job_starts),
+                    max(job_starts)
+                ))
     return tools
 
 
