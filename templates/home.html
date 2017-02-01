@@ -5,6 +5,7 @@
 <p>See <a href="https://wikitech.wikimedia.org/wiki/Tools_Precise_deprecation">Tools Precise deprecation</a> for information on migrating your tool off of Precise before the 2017-03-06 deadline.</p>
 
 <p>Total tools still running on Precise: <var>{{ tools|count }}</var></p>
+<p>Last updated: <var>{{ generated }}</var></p>
 
 <table id="precise">
   <thead>
@@ -20,6 +21,14 @@
     <tr>
       <td rowspan="{{ tool_data.jobs|count }}" id="{{ tool_name }}" class="tool-name">
         <a href="//tools.wmflabs.org/?tool={{ tool_name|urlencode }}">{{ tool_name }}</a>
+        <div class='members'>
+          members:
+          <ul>
+            {% for member in tool_data.members %}
+            <li>{{ member }}</li>
+            {% endfor %}
+          </ul>
+        </div>
       </td>
       {% for job, data in tool_data.jobs|dictsort %}
         {% if not loop.first %}<tr>{% endif %}
