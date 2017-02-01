@@ -50,7 +50,7 @@ def home():
             rec[0]: {
                 rec[1]: {
                     'count': rec[2],
-                    'last': rec[3]
+                    'last': datetime.datetime.fromtimestamp(rec[3])
                 }
             }
             for rec in precise_tools.tools_from_accounting(7)
