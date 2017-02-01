@@ -54,13 +54,12 @@ def tools_from_accounting(days):
                 continue
 
             tool = normalize_toolname(job['owner'])
-            jobname = normalize_jobname(tool, job['job_name'])
             if tool is not None:
                 if 'release=precise' in job['category']:
-                    jobs[tool][jobname].append(int(job['end_time']))
+                    jobs[tool][job['job_name']].append(int(job['end_time']))
                 else:
                     try:
-                        del jobs[tool][jobname]
+                        del jobs[tool][job['job_name']]
                     except KeyError:
                         # defaultdict does not prevent KeyError on del
                         pass
@@ -104,15 +103,15 @@ def tools_from_grid():
         for host, info in grid_info.iteritems():
             if is_precise_host(host):
                 if info['jobs']:
-                    for job in info['jobs'].values():
-                        tool = normalize_toolname(job['job_owner'])
-                        jobname = normalize_jobname(tool, job['job_name'])
-                        tools.append((
-                            tool,
-                            jobname,
+                    tools.extend([
+                        (
+                            normalize_toolname(job['job_owner']),
+                            job['job_name'],
                             1,
                             now
-                        ))
+                        )
+                        for job in info['jobs'].values()
+                    ])
         CACHE.save('grid', tools)
     return tools
 
@@ -121,9 +120,3 @@ def normalize_toolname(name):
     if name.startswith('tools.'):
         return name[6:]
     # else None -- we ignore non-tool accounts like 'root'
-
-
-def normalize_jobname(tool, job):
-    if tool and job == 'lighttpd-precise-' + tool:
-        return 'lighttpd-' + tool
-    return job
