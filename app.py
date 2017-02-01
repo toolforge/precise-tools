@@ -76,7 +76,7 @@ def home():
                     datetime.datetime.fromtimestamp(rec[3])
                 )
 
-        return flask.render_template('home.html', tools=filter(None, tools))
+        return flask.render_template('home.html', tools=tools)
     except Exception:
         traceback.print_exc()
         raise
