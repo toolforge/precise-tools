@@ -25,7 +25,7 @@
           members:
           <ul>
             {% for member in tool_data.members %}
-            <li>{{ member }}</li>
+            <li><a href="//tools.wmflabs.org/contact/search/{{ member|urlencode }}">{{ member }}</a></li>
             {% endfor %}
           </ul>
         </div>
