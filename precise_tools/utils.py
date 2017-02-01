@@ -21,7 +21,6 @@ from __future__ import division
 import datetime
 import json
 import os
-import yaml
 
 import ldap3
 import redis
@@ -81,18 +80,13 @@ def ldap_conn():
 
     Return value can be used as a context manager
     """
-    with open('/etc/ldap.yaml') as f:
-        config = yaml.safe_load(f)
-
     servers = ldap3.ServerPool([
-        ldap3.Server(host)
-        for host in config['servers']
+        ldap3.Server('ldap-labs.eqiad.wikimedia.org'),
+        ldap3.Server('ldap-labs.codfw.wikimedia.org'),
     ], ldap3.POOLING_STRATEGY_ROUND_ROBIN, active=True, exhaust=True)
     return ldap3.Connection(servers,
                             read_only=True,
-                            user=config['user'],
-                            auto_bind=True,
-                            password=config['password'])
+                            auto_bind=True)
 
 
 def uid_from_dn(dn):
