@@ -34,36 +34,46 @@ def home():
     try:
         # tools will be a structure something like:
         # {
-        #   'tool A': {
-        #       'job X': {
-        #           'count': N,
-        #           'last': datetime,
-        #       },
-        #       'job Y': {
-        #           'count': N,
-        #           'last': datetime,
-        #       },
-        #       ...
-        #   },
-        #   ...
+        #     'tool A': {
+        #         'jobs': {
+        #             'job X': {
+        #                 'count': N,
+        #                 'last': datetime,
+        #             },
+        #             'job Y': {
+        #                 'count': N,
+        #                 'last': datetime,
+        #             },
+        #             ...
+        #         },
+        #         'members': [
+        #             'user A',
+        #             'user B',
+        #             ...
+        #         ]
+        #     },
+        #     ...
         # }
         purge = 'purge' in flask.request.args
         tools = None if purge else precise_tools.CACHE.load('maindict')
         if tools is None:
-            tools = collections.defaultdict(
-                lambda: collections.defaultdict(lambda: {
+            tools = collections.defaultdict(lambda: {
+                'jobs': collections.defaultdict(lambda: {
                     'count': 1,
-                    'last': None
-                }))
+                    'last': ''}),
+                'members': []})
 
             for rec in precise_tools.tools_from_accounting(7):
-                tools[rec[0]][rec[1]]['count'] = rec[2]
-                tools[rec[0]][rec[1]]['last'] = (
+                tools[rec[0]]['jobs'][rec[1]]['count'] = rec[2]
+                tools[rec[0]]['jobs'][rec[1]]['last'] = (
                     datetime.datetime.fromtimestamp(
                         rec[3]).strftime('%Y-%m-%d %H:%M'))
-
             for rec in precise_tools.tools_from_grid():
-                tools[rec[0]][rec[1]]['last'] = 'Currently running'
+                tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
+
+            for key, val in precise_tools.tools_members(tools.keys()).items():
+                tools[key]['members'] = list(val)
+
             precise_tools.CACHE.save('maindict', tools)
 
         return flask.render_template('home.html', tools=tools)

@@ -21,6 +21,8 @@ import datetime
 import httplib
 import json
 
+import ldap3
+
 from . import utils
 
 ACCOUNTING_FIELDS = [
@@ -112,3 +114,27 @@ def normalize_toolname(name):
     if name.startswith('tools.'):
         return name[6:]
     # else None -- we ignore non-tool accounts like 'root'
+
+
+def tools_members(tools):
+    """
+    Return a dict that has members of a tool associated with each tool
+    Ex:
+    {'musikbot': ['musikanimal'],
+     'ifttt': ['slaporte', 'mahmoud', 'madhuvishy', 'ori']}
+    """
+    tool_to_members = collections.defaultdict(set)
+    with utils.ldap_conn() as conn:
+        for tool in tools:
+            conn.search(
+                'ou=servicegroups,dc=wikimedia,dc=org',
+                '(cn=tools.{})'.format(tool),
+                ldap3.SEARCH_SCOPE_WHOLE_SUBTREE,
+                attributes=['member', 'cn'],
+                time_limit=5
+            )
+            for resp in conn.response:
+                attributes = resp.get('attributes')
+                for member in attributes.get('member', []):
+                    tool_to_members[tool].add(utils.uid_from_dn(member))
+    return tool_to_members

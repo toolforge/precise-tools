@@ -21,7 +21,9 @@ from __future__ import division
 import datetime
 import json
 import os
+import yaml
 
+import ldap3
 import redis
 
 
@@ -71,3 +73,30 @@ def totimestamp(dt, epoch=None):
         epoch = datetime.datetime(1970, 1, 1)
     td = dt - epoch
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
+
+
+def ldap_conn():
+    """
+    Return a ldap connection
+
+    Return value can be used as a context manager
+    """
+    with open('/etc/ldap.yaml') as f:
+        config = yaml.safe_load(f)
+
+    servers = ldap3.ServerPool([
+        ldap3.Server(host)
+        for host in config['servers']
+    ], ldap3.POOLING_STRATEGY_ROUND_ROBIN, active=True, exhaust=True)
+    return ldap3.Connection(servers,
+                            read_only=True,
+                            user=config['user'],
+                            auto_bind=True,
+                            password=config['password'])
+
+
+def uid_from_dn(dn):
+    keys = dn.split(',')
+    uid_key = keys[0]
+    uid = uid_key.split('=')[1]
+    return uid

@@ -16,12 +16,12 @@
     </tr>
   </thead>
   <tbody>
-    {% for tool, jobs in tools|dictsort %}
+    {% for tool_name, tool_data in tools|dictsort %}
     <tr>
-      <td rowspan="{{ jobs|count }}" id="{{ tool }}" class="tool-name">
-        <a href="//tools.wmflabs.org/?tool={{ tool|urlencode }}">{{ tool }}</a>
+      <td rowspan="{{ tool_data.jobs|count }}" id="{{ tool_name }}" class="tool-name">
+        <a href="//tools.wmflabs.org/?tool={{ tool_name|urlencode }}">{{ tool_name }}</a>
       </td>
-      {% for job, data in jobs|dictsort %}
+      {% for job, data in tool_data.jobs|dictsort %}
         {% if not loop.first %}<tr>{% endif %}
         <td class="job-name">{{ job }}</td>
         <td class="seen">{{ data.count }}</td>
