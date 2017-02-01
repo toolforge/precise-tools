@@ -70,6 +70,7 @@ def tools_from_accounting(days):
                 len(job_starts),
                 max(job_starts)
             ))
+    return tools
 
 
 def is_precise_host(hostname):
