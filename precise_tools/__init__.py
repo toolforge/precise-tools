@@ -207,7 +207,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         if remove_migrated:
             # Delete any precise jobs already seen that have the same owner and
             # name so that a job fixed by the maintainers drops off the list.
-            for tool, name in grid_trusty:
+            for tool, name, host in grid_trusty:
                 if tool in tools and name in tools[tool]['jobs']:
                     del tools[tool]['jobs'][name]
                     if not tools[tool]['jobs']:
