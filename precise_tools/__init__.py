@@ -142,7 +142,7 @@ def normalize_toolname(name):
 def normalize_jobname(name):
     if (
         name.startswith('lighttpd-') and
-        not name.startswith('lighttpd-precise')
+        not name.startswith('lighttpd-precise-')
     ):
         name = name.replace('lighttpd-', 'lighttpd-precise-', 1)
     return name
@@ -223,8 +223,8 @@ def get_view_data(days=7, cached=True):
         # Delete any precise jobs already seen that have the same owner and
         # name so that a job fixed by the maintainers drops off the list.
         for tool, name in trusty_tools_from_grid(grid_info):
-            if tool in tools and name in tools[tool]:
-                del tools[tool][name]
+            if tool in tools and name in tools[tool]['jobs']:
+                del tools[tool]['jobs'][name]
 
         for rec in precise_tools_from_grid(grid_info):
             tools[rec[0]]['jobs'][rec[1]]['count'] += 1
