@@ -207,13 +207,13 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         if remove_migrated:
             # Delete any precise jobs already seen that have the same owner and
             # name so that a job fixed by the maintainers drops off the list.
-            for tool, name in grid_precise:
+            for tool, name in grid_trusty:
                 if tool in tools and name in tools[tool]['jobs']:
                     del tools[tool]['jobs'][name]
                     if not tools[tool]['jobs']:
                         del tools[tool]
 
-        for rec in grid_trusty:
+        for rec in grid_precise:
             tools[rec[0]]['jobs'][rec[1]]['count'] += 1
             tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
 
