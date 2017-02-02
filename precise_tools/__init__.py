@@ -225,6 +225,8 @@ def get_view_data(days=7, cached=True):
         for tool, name in trusty_tools_from_grid(grid_info):
             if tool in tools and name in tools[tool]['jobs']:
                 del tools[tool]['jobs'][name]
+                if not tools[tool]['jobs']:
+                    del tools[tool]
 
         for rec in precise_tools_from_grid(grid_info):
             tools[rec[0]]['jobs'][rec[1]]['count'] += 1
