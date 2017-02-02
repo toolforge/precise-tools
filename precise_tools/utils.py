@@ -94,3 +94,10 @@ def uid_from_dn(dn):
     uid_key = keys[0]
     uid = uid_key.split('=')[1]
     return uid
+
+
+def partition(func, seq):
+    # Source: https://stackoverflow.com/a/4579086
+    # Just so elegant!
+    return reduce(lambda cum, item: cum[not func(item)].append(item) or cum,
+                  seq, ([], []))
