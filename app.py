@@ -31,7 +31,9 @@ app = flask.Flask(__name__)
 def home():
     try:
         cached = 'purge' not in flask.request.args
-        ctx = precise_tools.get_view_data(days=7, cached=cached)
+        remove_migrated = 'all' not in flask.request.args
+        ctx = precise_tools.get_view_data(
+            days=7, cached=cached, remove_migrated=remove_migrated)
         return flask.render_template('home.html', **ctx)
     except Exception:
         traceback.print_exc()

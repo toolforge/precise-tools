@@ -39,7 +39,7 @@ ACCOUNTING_FIELDS = [
 CACHE = utils.Cache()
 
 
-def tools_from_accounting(days):
+def tools_from_accounting(days, remove_migrated):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
     precise exec nodes in the last N days."""
     delta = datetime.timedelta(days=days)
@@ -57,7 +57,7 @@ def tools_from_accounting(days):
             name = job['job_name']
             if 'release=precise' in job['category']:
                 jobs[tool][name].append(int(job['end_time']))
-            else:
+            elif remove_migrated:
                 # Delete any precise jobs already seen that have the same
                 # owner and name so that a job fixed by the maintainers drops
                 # off the list.
@@ -172,7 +172,7 @@ def tools_members(tools):
     return tool_to_members
 
 
-def get_view_data(days=7, cached=True):
+def get_view_data(days=7, cached=True, remove_migrated=True):
     """Get a structured collection of data about tools that are running on
     precise grid nodes.
 
@@ -202,7 +202,10 @@ def get_view_data(days=7, cached=True):
             },
         }
     """
-    ctx = CACHE.load('maindict') if cached else None
+
+    cache_key = 'maindict:days={}:remove_migrated={}'.format(
+        days, remove_migrated)
+    ctx = CACHE.load(cache_key) if cached else None
     if ctx is None:
         date_fmt = '%Y-%m-%d %H:%M'
         tools = collections.defaultdict(lambda: {
@@ -213,20 +216,21 @@ def get_view_data(days=7, cached=True):
             'members': [],
         })
 
-        for rec in tools_from_accounting(days):
+        for rec in tools_from_accounting(days, remove_migrated):
             tools[rec[0]]['jobs'][rec[1]]['count'] += rec[2]
             tools[rec[0]]['jobs'][rec[1]]['last'] = (
                 datetime.datetime.fromtimestamp(rec[3]).strftime(date_fmt))
 
         grid_info = gridengine_status()
 
-        # Delete any precise jobs already seen that have the same owner and
-        # name so that a job fixed by the maintainers drops off the list.
-        for tool, name in trusty_tools_from_grid(grid_info):
-            if tool in tools and name in tools[tool]['jobs']:
-                del tools[tool]['jobs'][name]
-                if not tools[tool]['jobs']:
-                    del tools[tool]
+        if remove_migrated:
+            # Delete any precise jobs already seen that have the same owner and
+            # name so that a job fixed by the maintainers drops off the list.
+            for tool, name in trusty_tools_from_grid(grid_info):
+                if tool in tools and name in tools[tool]['jobs']:
+                    del tools[tool]['jobs'][name]
+                    if not tools[tool]['jobs']:
+                        del tools[tool]
 
         for rec in precise_tools_from_grid(grid_info):
             tools[rec[0]]['jobs'][rec[1]]['count'] += 1
@@ -239,5 +243,5 @@ def get_view_data(days=7, cached=True):
             'generated': datetime.datetime.now().strftime(date_fmt),
             'tools': tools,
         }
-        CACHE.save('maindict', ctx)
+        CACHE.save(cache_key, ctx)
     return ctx
