@@ -54,11 +54,15 @@ def tools_from_accounting(days):
 
         tool = job['owner']
         if tool is not None:
+            name = job['job_name']
             if 'release=precise' in job['category']:
-                jobs[tool][job['job_name']].append(int(job['end_time']))
+                jobs[tool][name].append(int(job['end_time']))
             else:
+                # Delete any precise jobs already seen that have the same
+                # owner and name so that a job fixed by the maintainers drops
+                # off the list.
                 try:
-                    del jobs[tool][job['job_name']]
+                    del jobs[tool][normalize_jobname(name)]
                 except KeyError:
                     # defaultdict does not prevent KeyError on del
                     pass
@@ -82,10 +86,7 @@ def is_precise_host(hostname):
         return True
 
 
-def tools_from_grid():
-    """Get a list of (tool, job name, count, last) tuples for jobs running on
-    precise exec nodes currently."""
-    tools = []
+def gridengine_status():
     conn = httplib.HTTPConnection('tools.wmflabs.org')
     conn.request(
         'GET', '/gridengine-status',
@@ -95,8 +96,14 @@ def tools_from_grid():
     )
     res = conn.getresponse().read()
     if not res:
-        return []
-    grid_info = json.loads(res)['data']['attributes']
+        return {}
+    return json.loads(res)['data']['attributes']
+
+
+def precise_tools_from_grid(grid_info):
+    """Get a list of (tool, job name, count, last) tuples for jobs running on
+    precise exec nodes currently."""
+    tools = []
     for host, info in grid_info.iteritems():
         if is_precise_host(host):
             if info['jobs']:
@@ -110,10 +117,35 @@ def tools_from_grid():
     return tools
 
 
+def trusty_tools_from_grid(grid_info):
+    """Get a list of (tool, job name) tuples for jobs running on
+    trusty exec nodes currently."""
+    tools = []
+    for host, info in grid_info.iteritems():
+        if not is_precise_host(host) and info['jobs']:
+            tools.extend([
+                (
+                    normalize_toolname(job['job_owner']),
+                    normalize_jobname(job['job_name']),
+                )
+                for job in info['jobs'].values()
+            ])
+    return tools
+
+
 def normalize_toolname(name):
     if name.startswith('tools.'):
         return name[6:]
     # else None -- we ignore non-tool accounts like 'root'
+
+
+def normalize_jobname(name):
+    if (
+        name.startswith('lighttpd-') and
+        not name.startswith('lighttpd-precise')
+    ):
+        name = name.replace('lighttpd-', 'lighttpd-precise-', 1)
+    return name
 
 
 def tools_members(tools):
@@ -186,7 +218,15 @@ def get_view_data(days=7, cached=True):
             tools[rec[0]]['jobs'][rec[1]]['last'] = (
                 datetime.datetime.fromtimestamp(rec[3]).strftime(date_fmt))
 
-        for rec in tools_from_grid():
+        grid_info = gridengine_status()
+
+        # Delete any precise jobs already seen that have the same owner and
+        # name so that a job fixed by the maintainers drops off the list.
+        for tool, name in trusty_tools_from_grid(grid_info):
+            if tool in tools and name in tools[tool]:
+                del tools[tool][name]
+
+        for rec in precise_tools_from_grid(grid_info):
             tools[rec[0]]['jobs'][rec[1]]['count'] += 1
             tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
 
