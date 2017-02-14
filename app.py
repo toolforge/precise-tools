@@ -20,6 +20,7 @@
 import traceback
 
 import flask
+import flask.json
 
 import precise_tools
 
@@ -38,6 +39,15 @@ def home():
     except Exception:
         traceback.print_exc()
         raise
+
+
+@app.route('/json')
+def json_dump():
+    return flask.json.jsonify(
+        precise_tools.get_view_data(
+            days=7, cached=False, remove_migrated=True
+        )
+    )
 
 
 if __name__ == '__main__':
