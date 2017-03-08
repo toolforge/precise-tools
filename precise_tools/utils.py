@@ -54,7 +54,11 @@ class Cache(object):
 def tail_lines(filename, nbytes):
     """Get lines from last n bytes from the filename as an iterator."""
     with open(filename, 'r') as f:
-        f.seek(-nbytes, os.SEEK_END)
+        try:
+            f.seek(-nbytes, os.SEEK_END)
+        except IOError:
+            # File got truncated? Start at the front
+            f.seek(0, os.SEEK_SET)
 
         # Ignore first line as it may be only part of a line
         f.readline()
