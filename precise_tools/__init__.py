@@ -45,27 +45,31 @@ def tools_from_accounting(days, remove_migrated):
     delta = datetime.timedelta(days=days)
     cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
     jobs = collections.defaultdict(lambda: collections.defaultdict(list))
-    for line in utils.tail_lines(
-            '/data/project/.system/accounting', 400 * 45000 * days):
-        parts = line.split(':')
-        job = dict(zip(ACCOUNTING_FIELDS, parts))
-        if int(job['end_time']) < cutoff:
-            continue
+    files = [
+        '/data/project/.system/accounting.1',  # oops, file got rotated
+        '/data/project/.system/accounting'
+    ]
+    for f in files:
+        for line in utils.tail_lines(f, 400 * 45000 * days):
+            parts = line.split(':')
+            job = dict(zip(ACCOUNTING_FIELDS, parts))
+            if int(job['end_time']) < cutoff:
+                continue
 
-        tool = job['owner']
-        if tool is not None:
-            name = job['job_name']
-            if 'release=precise' in job['category']:
-                jobs[tool][name].append(int(job['end_time']))
-            elif remove_migrated:
-                # Delete any precise jobs already seen that have the same
-                # owner and name so that a job fixed by the maintainers drops
-                # off the list.
-                try:
-                    del jobs[tool][normalize_jobname(name)]
-                except KeyError:
-                    # defaultdict does not prevent KeyError on del
-                    pass
+            tool = job['owner']
+            if tool is not None:
+                name = job['job_name']
+                if 'release=precise' in job['category']:
+                    jobs[tool][name].append(int(job['end_time']))
+                elif remove_migrated:
+                    # Delete any precise jobs already seen that have the same
+                    # owner and name so that a job fixed by the maintainers
+                    # drops off the list.
+                    try:
+                        del jobs[tool][normalize_jobname(name)]
+                    except KeyError:
+                        # defaultdict does not prevent KeyError on del
+                        pass
 
     tools = []
     for tool_name, tool_jobs in jobs.iteritems():
