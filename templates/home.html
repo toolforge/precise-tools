@@ -2,9 +2,12 @@
 {% block body %}
 <h1>Tools running jobs on Precise OGE hosts in last 7 days</h1>
 
-<p>See <a href="https://wikitech.wikimedia.org/wiki/Tools_Precise_deprecation">Tools Precise deprecation</a> for information on migrating your tool off of Precise before the <a href="https://lists.wikimedia.org/pipermail/labs-announce/2017-March/000214.html">2017-03-14 deadline</a>.</p>
+<h2>All Precise grid engine hosts have been deleted.</h2>
 
-<p>Total tools still running on Precise: <var>{{ tools|count }}</var></p>
+<p>All webservices and other jobs that were still running on Precise when the
+hosts were deleted will need manual intervention from their maintainers. See <a href="https://wikitech.wikimedia.org/wiki/Tools_Precise_deprecation">Tools Precise deprecation</a> for information on migrating your tool to Trusty or Kubernetes.</p>
+
+<p>Total tools that were running on Precise: <var>{{ tools|count }}</var></p>
 <p>Last updated: <var>{{ generated }}</var></p>
 
 <table id="precise">
