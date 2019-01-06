@@ -85,14 +85,13 @@ def normalize_toolname(name):
     # else None -- we ignore non-tool accounts like 'root'
 
 
-def tools_members(tools, seen=None):
+def tools_members(tools, seen):
     """
     Return a dict that has members of a tool associated with each tool
     Ex:
     {'musikbot': ['musikanimal'],
      'ifttt': ['slaporte', 'mahmoud', 'madhuvishy', 'ori']}
     """
-    seen = [] if seen is None else seen
     members = collections.defaultdict(set)
     with utils.ldap_conn() as conn:
         for tool in tools:
@@ -187,7 +186,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             tools[tool]['jobs'][name]['count'] += 1
             tools[tool]['jobs'][name]['last'] = 'Currently running'
 
-        for key, val in tools_members(tools.keys()).items():
+        for key, val in tools_members(tools.keys(), []).items():
             tools[key]['members'] = list(val)
 
         ctx = {
