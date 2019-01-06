@@ -85,13 +85,14 @@ def normalize_toolname(name):
     # else None -- we ignore non-tool accounts like 'root'
 
 
-def tools_members(tools):
+def tools_members(tools, seen=None):
     """
     Return a dict that has members of a tool associated with each tool
     Ex:
     {'musikbot': ['musikanimal'],
      'ifttt': ['slaporte', 'mahmoud', 'madhuvishy', 'ori']}
     """
+    seen = [] if seen is None else seen
     members = collections.defaultdict(set)
     with utils.ldap_conn() as conn:
         for tool in tools:
@@ -109,7 +110,11 @@ def tools_members(tools):
                     if uid.startswith('tools.'):
                         # Expand nested tools
                         nested = uid[6:]
-                        members[tool].update(tools_members([nested])[nested])
+                        if nested not in seen:
+                            # Guard against membership loops
+                            seen.append(nested)
+                            members[tool].update(
+                                tools_members([nested])[nested], seen)
                     else:
                         members[tool].add(uid)
     return members
