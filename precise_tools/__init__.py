@@ -46,7 +46,7 @@ def tools_from_accounting(remove_migrated):
 
     if remove_migrated:
         r = requests.get('https://tools.wmflabs.org/sge-jobs/json')
-        for tool, data in r.json()['tools'].iteritems():
+        for tool, data in r.json()['tools'].items():
             for name in data['jobs'].keys():
                 try:
                     del jobs[tool][name]
@@ -63,7 +63,7 @@ def gridengine_status(url):
     grid_info = r.json()['data']['attributes']
 
     tools = []
-    for host, info in grid_info.iteritems():
+    for host, info in grid_info.items():
         if info['jobs']:
             tools.extend([
                 (
@@ -82,7 +82,7 @@ def active_jobs(url):
     grid_info = r.json()['data']['attributes']
 
     tools = []
-    for host, info in grid_info.iteritems():
+    for host, info in grid_info.items():
         if info['jobs']:
             tools.extend([
                 (
