@@ -90,7 +90,7 @@ def tools_members(tools):
     {'musikbot': ['musikanimal'],
      'ifttt': ['slaporte', 'mahmoud', 'madhuvishy', 'ori']}
     """
-    tool_to_members = collections.defaultdict(set)
+    members = collections.defaultdict(set)
     with utils.ldap_conn() as conn:
         for tool in tools:
             conn.search(
@@ -103,8 +103,14 @@ def tools_members(tools):
             for resp in conn.response:
                 attributes = resp.get('attributes')
                 for member in attributes.get('member', []):
-                    tool_to_members[tool].add(utils.uid_from_dn(member))
-    return tool_to_members
+                    uid = utils.uid_from_dn(member)
+                    if uid.startsWith('tools.'):
+                        # Expand nested tools
+                        nested = uid[6:]
+                        members[tool].update(tools_members([nested])[nested])
+                    else:
+                        members[tool].add(uid)
+    return members
 
 
 def get_view_data(days=7, cached=True, remove_migrated=True):
