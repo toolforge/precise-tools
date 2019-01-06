@@ -63,9 +63,35 @@ def ldap_conn():
         ldap3.Server('ldap-labs.eqiad.wikimedia.org'),
         ldap3.Server('ldap-labs.codfw.wikimedia.org'),
     ], ldap3.ROUND_ROBIN, active=True, exhaust=True)
-    return ldap3.Connection(servers,
-                            read_only=True,
-                            auto_bind=True)
+    return ldap3.Connection(
+        servers, read_only=True, auto_bind=True)
+
+
+def find_members(conn, tool, seen):
+    members = set()
+    entries = conn.extend.standard.paged_search(
+        search_base='ou=servicegroups,dc=wikimedia,dc=org',
+        search_filter='(cn=tools.{})'.format(tool),
+        search_scope=ldap3.SUBTREE,
+        attributes=['member', 'cn'],
+        time_limit=5,
+        paged_size=256,
+        generator=True,
+    )
+    for entry in entries:
+        for member in entry['attributes'].get('member', []):
+            uid = uid_from_dn(member)
+            if uid.startswith('tools.'):
+                nested = uid[6:]
+                if nested == tool:
+                    print('Tool {} is a member of itself!!'.format(tool))
+                    continue
+                if nested not in seen:
+                    seen.append(nested)
+                    members.update(find_members(conn, nested, seen))
+            else:
+                members.add(uid)
+    return members
 
 
 def uid_from_dn(dn):

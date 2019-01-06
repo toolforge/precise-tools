@@ -16,10 +16,8 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import collections
 import datetime
 
-import ldap3
 import requests
 
 from . import utils
@@ -92,30 +90,10 @@ def tools_members(tools, seen):
     {'musikbot': ['musikanimal'],
      'ifttt': ['slaporte', 'mahmoud', 'madhuvishy', 'ori']}
     """
-    members = collections.defaultdict(set)
+    members = {}
     with utils.ldap_conn() as conn:
         for tool in tools:
-            conn.search(
-                'ou=servicegroups,dc=wikimedia,dc=org',
-                '(cn=tools.{})'.format(tool),
-                ldap3.SUBTREE,
-                attributes=['member', 'cn'],
-                time_limit=5
-            )
-            for resp in conn.response:
-                attributes = resp.get('attributes')
-                for member in attributes.get('member', []):
-                    uid = utils.uid_from_dn(member)
-                    if uid.startswith('tools.'):
-                        # Expand nested tools
-                        nested = uid[6:]
-                        if nested not in seen:
-                            # Guard against membership loops
-                            seen.append(nested)
-                            members[tool].update(
-                                tools_members([nested], seen)[nested])
-                    else:
-                        members[tool].add(uid)
+            members[tool] = utils.find_members(conn, tool, [])
     return members
 
 
@@ -186,7 +164,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             tools[tool]['jobs'][name]['count'] += 1
             tools[tool]['jobs'][name]['last'] = 'Currently running'
 
-        for key, val in tools_members(tools.keys(), []).items():
+        for key, val in tools_members(tools.keys(), None).items():
             tools[key]['members'] = list(val)
 
         ctx = {
