@@ -104,7 +104,7 @@ def tools_members(tools):
                 attributes = resp.get('attributes')
                 for member in attributes.get('member', []):
                     uid = utils.uid_from_dn(member)
-                    if uid.startsWith('tools.'):
+                    if uid.startswith('tools.'):
                         # Expand nested tools
                         nested = uid[6:]
                         members[tool].update(tools_members([nested])[nested])

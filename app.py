@@ -61,6 +61,7 @@ def user(user):
         traceback.print_exc()
         raise
 
+
 @app.route('/json')
 def json_dump():
     return flask.json.jsonify(
