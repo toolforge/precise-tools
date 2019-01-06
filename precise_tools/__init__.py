@@ -46,7 +46,7 @@ def tools_from_accounting(remove_migrated):
 
     if remove_migrated:
         r = requests.get('https://tools.wmflabs.org/sge-jobs/json')
-        for tool, data in r.json()['tools']:
+        for tool, data in r.json()['tools'].iteritems():
             for name in data['jobs'].keys():
                 try:
                     del jobs[tool][name]
