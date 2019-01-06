@@ -56,13 +56,29 @@ def user(user):
         for tool in list(ctx['tools']):
             if user not in ctx['tools'][tool]['members']:
                 del ctx['tools'][tool]
-        return flask.render_template('home.html', **ctx)
+        return flask.render_template('user.html', user=user, **ctx)
     except Exception:
         traceback.print_exc()
         raise
 
 
 @app.route('/json')
+@app.route('/t/<name>')
+def tool(name):
+    try:
+        cached = 'purge' not in flask.request.args
+        remove_migrated = 'all' not in flask.request.args
+        ctx = precise_tools.get_view_data(
+            cached=cached, remove_migrated=remove_migrated)
+        for tool in list(ctx['tools']):
+            if tool != name:
+                del ctx['tools'][tool]
+        return flask.render_template('tool.html', name=name, **ctx)
+    except Exception:
+        traceback.print_exc()
+        raise
+
+
 def json_dump():
     return flask.json.jsonify(
         precise_tools.get_view_data(

@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1>Tools maintained by {{user}} running jobs on Trusty grid engine in last 7 days</h1>
+
+<p>{{user}}'s tools still running on Trusty: <var>{{ tools|count }}</var></p>
+<p>Last updated: <var>{{ generated }}</var></p>
+
+<table id="precise">
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Job</th>
+      <th>Total seen</th>
+      <th>Last seen (exit)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tool_name, tool_data in tools|dictsort %}
+    <tr>
+      <td rowspan="{{ tool_data.jobs|count }}" id="{{ tool_name }}" class="tool-name">
+        <a href="https://tools.wmflabs.org/admin/tool/{{ tool_name|urlencode }}">{{ tool_name }}</a>
+        <div class='members'>
+          members:
+          <ul>
+            {% for member in tool_data.members %}
+            <li><a href="https://tools.wmflabs.org/contact/search/{{ member|urlencode }}">{{ member }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </td>
+      {% for job, data in tool_data.jobs|dictsort %}
+        {% if not loop.first %}<tr>{% endif %}
+        <td class="job-name">{{ job }}</td>
+        <td class="seen">{{ data.count }}</td>
+        <td class="last">{{ data.last }}</td>
+        {% if not loop.last %}</tr>{% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
