@@ -159,7 +159,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         for tool, name, host in grid_trusty:
             if tool and tool not in tools:
                 tools[tool] = {
-                    'jobs': {}
+                    'jobs': {},
                     'members': [],
                 }
             if name not in tools[tool]:
