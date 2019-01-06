@@ -157,7 +157,11 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         grid_trusty = gridengine_status(
             'https://tools.wmflabs.org/gridengine-status/')
         for tool, name, host in grid_trusty:
-            if tool and tool not in tools:
+            if not tool:
+                print('Discarding user job: {}@{}'.format(name, host))
+                continue
+
+            if tool not in tools:
                 tools[tool] = {
                     'jobs': {},
                     'members': [],
