@@ -113,7 +113,7 @@ def tools_members(tools, seen):
                             # Guard against membership loops
                             seen.append(nested)
                             members[tool].update(
-                                tools_members([nested])[nested], seen)
+                                tools_members([nested], seen)[nested])
                     else:
                         members[tool].add(uid)
     return members
