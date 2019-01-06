@@ -38,10 +38,11 @@ ACCOUNTING_FIELDS = [
 CACHE = utils.Cache()
 
 
-def tools_from_accounting(remove_migrated):
+def tools_from_accounting(remove_migrated=True, cached=False):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
     trusty exec nodes in the last 7 days."""
-    r = requests.get('https://tools.wmflabs.org/grid-jobs/json')
+    p = {'purge': 1} if not cached else None
+    r = requests.get('https://tools.wmflabs.org/grid-jobs/json', params=p)
     jobs = r.json()['tools']
 
     if remove_migrated:
@@ -56,10 +57,11 @@ def tools_from_accounting(remove_migrated):
     return jobs
 
 
-def gridengine_status(url):
+def gridengine_status(url, cached=False):
     """Get a list of (tool, job name, host) tuples for jobs currently running
     on the given grid."""
-    r = requests.get(url)
+    p = {'purge': 1} if not cached else None
+    r = requests.get(url,  params=p)
     grid_info = r.json()['data']['attributes']
 
     tools = []
@@ -149,11 +151,11 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
     ctx = CACHE.load(cache_key) if cached else None
     if ctx is None:
         date_fmt = '%Y-%m-%d %H:%M'
-        tools = tools_from_accounting(remove_migrated)
+        tools = tools_from_accounting(remove_migrated, cached)
 
         if remove_migrated:
             grid_stretch = gridengine_status(
-                'https://tools.wmflabs.org/sge-status/api/v1/')
+                'https://tools.wmflabs.org/sge-status/api/v1/', cached)
             for tool, name, host in grid_stretch:
                 if tool in tools and name in tools[tool]['jobs']:
                     del tools[tool]['jobs'][name]
@@ -161,7 +163,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
                         del tools[tool]
 
         grid_trusty = gridengine_status(
-            'https://tools.wmflabs.org/gridengine-status/')
+            'https://tools.wmflabs.org/gridengine-status/', cached)
         for tool, name, host in grid_trusty:
             if not tool:
                 print('Discarding user job: {}@{}'.format(name, host))
