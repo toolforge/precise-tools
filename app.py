@@ -53,7 +53,7 @@ def user(user):
         remove_migrated = 'all' not in flask.request.args
         ctx = precise_tools.get_view_data(
             cached=cached, remove_migrated=remove_migrated)
-        for tool in ctx['tools'].keys():
+        for tool in list(ctx['tools']):
             if user not in ctx['tools'][tool]['members']:
                 del ctx['tools'][tool]
         return flask.render_template('home.html', **ctx)
