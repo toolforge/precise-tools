@@ -178,8 +178,8 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
                     'jobs': {},
                     'members': [],
                 }
-            if name not in tools[tool]:
-                tools[tool][name] = {
+            if name not in tools[tool]['jobs']:
+                tools[tool]['jobs'][name] = {
                     'count': 0,
                     'last': '',
                 }
