@@ -1,3 +1,5 @@
 flask
 ldap3
-redis
+redis>=3.0
+requests
+toolforge

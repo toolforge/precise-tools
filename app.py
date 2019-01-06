@@ -21,11 +21,16 @@ import traceback
 
 import flask
 import flask.json
+import toolforge
+import werkzeug.contrib.fixers
 
 import precise_tools
 
 
 app = flask.Flask(__name__)
+app.wsgi_app = werkzeug.contrib.fixers.ProxyFix(app.wsgi_app)
+app.before_request(toolforge.redirect_to_https)
+toolforge.set_user_agent('trusty-tools')
 
 
 @app.route('/')
@@ -34,7 +39,7 @@ def home():
         cached = 'purge' not in flask.request.args
         remove_migrated = 'all' not in flask.request.args
         ctx = precise_tools.get_view_data(
-            days=7, cached=cached, remove_migrated=remove_migrated)
+            cached=cached, remove_migrated=remove_migrated)
         return flask.render_template('home.html', **ctx)
     except Exception:
         traceback.print_exc()
@@ -45,7 +50,7 @@ def home():
 def json_dump():
     return flask.json.jsonify(
         precise_tools.get_view_data(
-            days=7, cached=False, remove_migrated=True
+            cached=False, remove_migrated=True
         )
     )
 

@@ -18,10 +18,9 @@
 
 import collections
 import datetime
-import httplib
-import json
 
 import ldap3
+import requests
 
 from . import utils
 
@@ -39,69 +38,29 @@ ACCOUNTING_FIELDS = [
 CACHE = utils.Cache()
 
 
-def tools_from_accounting(days, remove_migrated):
+def tools_from_accounting(remove_migrated):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
-    precise exec nodes in the last N days."""
-    delta = datetime.timedelta(days=days)
-    cutoff = int(utils.totimestamp(datetime.datetime.now() - delta))
-    jobs = collections.defaultdict(lambda: collections.defaultdict(list))
-    files = [
-        '/data/project/.system/accounting.1',  # oops, file got rotated
-        '/data/project/.system/accounting'
-    ]
-    for f in files:
-        for line in utils.tail_lines(f, 400 * 45000 * days):
-            parts = line.split(':')
-            job = dict(zip(ACCOUNTING_FIELDS, parts))
-            if int(job['end_time']) < cutoff:
-                continue
+    trusty exec nodes in the last 7 days."""
+    r = requests.get('https://tools.wmflabs.org/grid-jobs/json')
+    jobs = r.json()['tools']
 
-            tool = job['owner']
-            if tool is not None:
-                name = job['job_name']
-                if 'release=precise' in job['category']:
-                    jobs[tool][name].append(int(job['end_time']))
-                elif remove_migrated:
-                    # Delete any precise jobs already seen that have the same
-                    # owner and name so that a job fixed by the maintainers
-                    # drops off the list.
-                    try:
-                        del jobs[tool][normalize_jobname(name)]
-                    except KeyError:
-                        # defaultdict does not prevent KeyError on del
-                        pass
+    if remove_migrated:
+        r = requests.get('https://tools.wmflabs.org/sge-jobs/json')
+        for tool, data in r.json()['tools']:
+            for name in data['jobs'].keys():
+                try:
+                    del jobs[tool][name]
+                except KeyError:
+                    pass
 
-    tools = []
-    for tool_name, tool_jobs in jobs.iteritems():
-        tool_name = normalize_toolname(tool_name)
-        if tool_name is not None:
-            for job_name, job_starts in tool_jobs.iteritems():
-                tools.append((
-                    tool_name,
-                    job_name,
-                    len(job_starts),
-                    max(job_starts)
-                ))
-    return tools
+    return jobs
 
 
-def is_precise_host(hostname):
-    if hostname[-4:-2] == '12':
-        return True
-
-
-def gridengine_status():
+def gridengine_status(url):
     """Get a list of (tool, job name, host) tuples for jobs currently running
-    on precise and trusty exec nodes, partitioned into a tuple of two lists."""
-    conn = httplib.HTTPConnection('tools.wmflabs.org')
-    conn.request(
-        'GET', '/gridengine-status',
-        headers={
-            'User-Agent': 'https://tools.wmflabs.org/precise-tools/'
-        }
-    )
-    res = conn.getresponse().read()
-    grid_info = json.loads(res)['data']['attributes'] if res else {}
+    on the given grid."""
+    r = requests.get(url)
+    grid_info = r.json()['data']['attributes']
 
     tools = []
     for host, info in grid_info.iteritems():
@@ -109,28 +68,37 @@ def gridengine_status():
             tools.extend([
                 (
                     normalize_toolname(job['job_owner']),
-                    normalize_jobname(job['job_name']),
+                    job['job_name'],
                     host
                 )
                 for job in info['jobs'].values()
             ])
 
-    return utils.partition(lambda job: is_precise_host(job[2]), tools)
+    return tools
+
+
+def active_jobs(url):
+    r = requests.get(url)
+    grid_info = r.json()['data']['attributes']
+
+    tools = []
+    for host, info in grid_info.iteritems():
+        if info['jobs']:
+            tools.extend([
+                (
+                    normalize_toolname(job['job_owner']),
+                    job['job_name'],
+                    host
+                )
+                for job in info['jobs'].values()
+            ])
+    return tools
 
 
 def normalize_toolname(name):
     if name.startswith('tools.'):
         return name[6:]
     # else None -- we ignore non-tool accounts like 'root'
-
-
-def normalize_jobname(name):
-    if (
-        name.startswith('lighttpd-') and
-        not name.startswith('lighttpd-precise-')
-    ):
-        name = name.replace('lighttpd-', 'lighttpd-precise-', 1)
-    return name
 
 
 def tools_members(tools):
@@ -197,27 +165,23 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             'jobs': collections.defaultdict(lambda: {
                 'count': 0,
                 'last': '',
-            }),
+                }),
             'members': [],
-        })
-
-        for rec in tools_from_accounting(days, remove_migrated):
-            tools[rec[0]]['jobs'][rec[1]]['count'] += rec[2]
-            tools[rec[0]]['jobs'][rec[1]]['last'] = (
-                datetime.datetime.fromtimestamp(rec[3]).strftime(date_fmt))
-
-        grid_precise, grid_trusty = gridengine_status()
+            })
+        tools.update(tools_from_accounting(remove_migrated))
 
         if remove_migrated:
-            # Delete any precise jobs already seen that have the same owner and
-            # name so that a job fixed by the maintainers drops off the list.
-            for tool, name, host in grid_trusty:
+            grid_stretch = gridengine_status(
+                'https://tools.wmflabs.org/sge-status/api/v1/')
+            for tool, name, host in grid_stretch:
                 if tool in tools and name in tools[tool]['jobs']:
                     del tools[tool]['jobs'][name]
                     if not tools[tool]['jobs']:
                         del tools[tool]
 
-        for rec in grid_precise:
+        grid_trusty = gridengine_status(
+            'https://tools.wmflabs.org/gridengine-status/')
+        for rec in grid_trusty:
             tools[rec[0]]['jobs'][rec[1]]['count'] += 1
             tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
 

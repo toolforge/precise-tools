@@ -18,9 +18,10 @@
 
 from __future__ import division
 
-import datetime
+import hashlib
 import json
 import os
+import pwd
 
 import ldap3
 import redis
@@ -29,9 +30,10 @@ import redis
 class Cache(object):
     def __init__(self, enabled=True):
         self.enabled = enabled
-        self.conn = redis.Redis(host='tools-redis')
-        with open(os.path.expanduser('~/redis-prefix.conf'), 'r') as f:
-            self.prefix = f.read()
+        self.conn = redis.Redis(host='tools-redis', decode_responses=True)
+        u = pwd.getpwuid(os.getuid())
+        self.prefix = hashlib.sha1(
+            '{}.{}'.format(u.pw_name, u.pw_dir).encode('utf-8')).hexdigest()
 
     def key(self, val):
         return '%s%s' % (self.prefix, val)
@@ -48,34 +50,7 @@ class Cache(object):
     def save(self, key, data, expiry=3600):
         if self.enabled:
             real_key = self.key(key)
-            self.conn.setex(real_key, json.dumps(data), expiry)
-
-
-def tail_lines(filename, nbytes):
-    """Get lines from last n bytes from the filename as an iterator."""
-    with open(filename, 'r') as f:
-        try:
-            f.seek(-nbytes, os.SEEK_END)
-        except IOError:
-            # File got truncated? Start at the front
-            f.seek(0, os.SEEK_SET)
-
-        # Ignore first line as it may be only part of a line
-        f.readline()
-
-        # We can't simply `return f` as the returned f will be closed
-        # Do all the IO within this function
-        for line in f:
-            yield line
-
-
-def totimestamp(dt, epoch=None):
-    """Convert a datetime to unix epoch seconds."""
-    # From http://stackoverflow.com/a/8778548/8171
-    if epoch is None:
-        epoch = datetime.datetime(1970, 1, 1)
-    td = dt - epoch
-    return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
+            self.conn.setex(real_key, expiry, json.dumps(data))
 
 
 def ldap_conn():
@@ -98,10 +73,3 @@ def uid_from_dn(dn):
     uid_key = keys[0]
     uid = uid_key.split('=')[1]
     return uid
-
-
-def partition(func, seq):
-    # Source: https://stackoverflow.com/a/4579086
-    # Just so elegant!
-    return reduce(lambda cum, item: cum[not func(item)].append(item) or cum,
-                  seq, ([], []))
