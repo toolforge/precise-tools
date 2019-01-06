@@ -77,24 +77,6 @@ def gridengine_status(url):
     return tools
 
 
-def active_jobs(url):
-    r = requests.get(url)
-    grid_info = r.json()['data']['attributes']
-
-    tools = []
-    for host, info in grid_info.items():
-        if info['jobs']:
-            tools.extend([
-                (
-                    normalize_toolname(job['job_owner']),
-                    job['job_name'],
-                    host
-                )
-                for job in info['jobs'].values()
-            ])
-    return tools
-
-
 def normalize_toolname(name):
     if name.startswith('tools.'):
         return name[6:]
@@ -161,14 +143,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
     ctx = CACHE.load(cache_key) if cached else None
     if ctx is None:
         date_fmt = '%Y-%m-%d %H:%M'
-        tools = collections.defaultdict(lambda: {
-            'jobs': collections.defaultdict(lambda: {
-                'count': 0,
-                'last': '',
-                }),
-            'members': [],
-            })
-        tools.update(tools_from_accounting(remove_migrated))
+        tools = tools_from_accounting(remove_migrated)
 
         if remove_migrated:
             grid_stretch = gridengine_status(
@@ -181,9 +156,19 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
 
         grid_trusty = gridengine_status(
             'https://tools.wmflabs.org/gridengine-status/')
-        for rec in grid_trusty:
-            tools[rec[0]]['jobs'][rec[1]]['count'] += 1
-            tools[rec[0]]['jobs'][rec[1]]['last'] = 'Currently running'
+        for tool, name, host in grid_trusty:
+            if tool and tool not in tools:
+                tools[tool] = {
+                    'jobs': {}
+                    'members': [],
+                }
+            if name not in tools[tool]:
+                tools[tool][name] = {
+                    'count': 0,
+                    'last': '',
+                }
+            tools[tool]['jobs'][name]['count'] += 1
+            tools[tool]['jobs'][name]['last'] = 'Currently running'
 
         for key, val in tools_members(tools.keys()).items():
             tools[key]['members'] = list(val)
