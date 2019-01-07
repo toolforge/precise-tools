@@ -22,17 +22,6 @@ import requests
 
 from . import utils
 
-ACCOUNTING_FIELDS = [
-    'qname', 'hostname', 'group', 'owner', 'job_name', 'job_number',
-    'account', 'priority', 'submission_time', 'start_time', 'end_time',
-    'failed', 'exit_status', 'ru_wallclock', 'ru_utime', 'ru_stime',
-    'ru_maxrss', 'ru_ixrss', 'ru_ismrss', 'ru_idrss', 'ru_isrss', 'ru_minflt',
-    'ru_majflt', 'ru_nswap', 'ru_inblock', 'ru_oublock', 'ru_msgsnd',
-    'ru_msgrcv', 'ru_nsignals', 'ru_nvcsw', 'ru_nivcsw', 'project',
-    'department', 'granted_pe', 'slots', 'task_number', 'cpu', 'mem', 'io',
-    'category', 'iow', 'pe_taskid', 'maxvemem', 'arid', 'ar_submission_time',
-]
-
 CACHE = utils.Cache()
 
 
@@ -48,7 +37,9 @@ def tools_from_accounting(remove_migrated=True, cached=False):
         for tool, data in r.json()['tools'].items():
             for name in data['jobs'].keys():
                 try:
-                    del jobs[tool][name]
+                    del jobs[tool]['jobs'][name]
+                    if not jobs[tool]['jobs']:
+                        del jobs[tool]
                 except KeyError:
                     pass
 
