@@ -21,7 +21,7 @@
         <div class='members'>
           members:
           <ul>
-            {% for member in tool_data.members %}
+            {% for member in tool_data.members|sort %}
             <li><a href="{{ url_for('user', user=member) }}">{{ member }}</a></li>
             {% endfor %}
           </ul>

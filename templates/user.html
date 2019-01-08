@@ -22,7 +22,7 @@
         <div class='members'>
           members:
           <ul>
-            {% for member in tool_data.members %}
+            {% for member in tool_data.members|sort %}
             {% if member == user %}
             <strong>{{ member }}</strong>
             {% else %}
