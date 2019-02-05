@@ -62,7 +62,6 @@ def user(user):
         raise
 
 
-@app.route('/json')
 @app.route('/t/<name>')
 def tool(name):
     try:
@@ -79,6 +78,7 @@ def tool(name):
         raise
 
 
+@app.route('/json')
 def json_dump():
     return flask.json.jsonify(
         precise_tools.get_view_data(
