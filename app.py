@@ -80,11 +80,16 @@ def tool(name):
 
 @app.route('/json')
 def json_dump():
-    return flask.json.jsonify(
-        precise_tools.get_view_data(
-            cached=False, remove_migrated=True
+    try:
+        cached = 'purge' not in flask.request.args
+        return flask.json.jsonify(
+            precise_tools.get_view_data(
+                cached=cached, remove_migrated=True
+            )
         )
-    )
+    except Exception:
+        traceback.print_exc()
+        raise
 
 
 if __name__ == '__main__':
