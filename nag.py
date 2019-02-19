@@ -25,6 +25,9 @@ import ssl
 import requests
 
 
+EXCLUDED_TOOLS = (
+    'gridengine-status',
+)
 SERVER = 'mail.tools.wmflabs.org'
 REPLY_TO = 'Bryan Davis <bd808@tools.wmflabs.org>'
 SUBJECT = '[Toolforge] Tools you maintain are running on Trusty job grid'
@@ -57,6 +60,8 @@ def get_maintainer_info():
     r = requests.get('https://tools.wmflabs.org/trusty-tools/json')
     trusty_tools = r.json()
     for tool, data in trusty_tools['tools'].items():
+        if tool in EXCLUDED_TOOLS:
+            continue
         for member in data['members']:
             maintainers[member].add(tool)
     return maintainers
