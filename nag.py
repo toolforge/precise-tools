@@ -21,6 +21,7 @@ import collections
 import email.message
 import smtplib
 import ssl
+import time
 
 import requests
 
@@ -89,6 +90,7 @@ def main():
         server.starttls(context=ctx)
         for maintainer, tools in maintainers.items():
             send_message(server, maintainer, tools)
+            time.sleep(0.5)  # Try to be nice to the outbound mail relay
 
 
 if __name__ == '__main__':
