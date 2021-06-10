@@ -22,15 +22,12 @@ import traceback
 import flask
 import flask.json
 import toolforge
-import werkzeug.contrib.fixers
 
 import precise_tools
 
 
 app = flask.Flask(__name__)
-app.wsgi_app = werkzeug.contrib.fixers.ProxyFix(app.wsgi_app)
-app.before_request(toolforge.redirect_to_https)
-toolforge.set_user_agent('trusty-tools')
+toolforge.set_user_agent('stretch-tools')
 
 
 @app.route('/')

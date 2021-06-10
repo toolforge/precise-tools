@@ -29,25 +29,30 @@ def tools_from_accounting(remove_migrated=True, cached=False):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
     trusty exec nodes in the last 7 days."""
     p = {'purge': 1} if not cached else None
-    r = requests.get('https://tools.wmflabs.org/grid-jobs/json', params=p)
-    jobs = r.json()['tools']
+    r = requests.get('https://sge-jobs.toolforge.org/json', params=p)
 
-    if remove_migrated:
-        r = requests.get('https://tools.wmflabs.org/sge-jobs/json')
-        for tool, data in r.json()['tools'].items():
-            for name in data['jobs'].keys():
-                try:
-                    del jobs[tool]['jobs'][name]
-                    if not jobs[tool]['jobs']:
-                        del jobs[tool]
-                except KeyError:
-                    pass
+    tools = {}
 
-    return jobs
+    for tool, data in r.json()['tools'].items():
+        jobs = {}
+        for job_name, job in data['jobs'].items():
+            if 'default' in job['per_release'].keys() or 'stretch' in job['per_release'].keys():
+                if (not remove_migrated) or ('buster' not in job['per_release'].keys()):
+                    jobs[job_name] = {
+                        'count': job['count'],
+                        'last': job['last'],
+                    }
+        if len(jobs) != 0:
+            tools[tool] = {
+                'jobs': jobs,
+                'members': data['members']
+            }
+
+    return tools
 
 
 def gridengine_status(url, cached=False):
-    """Get a list of (tool, job name, host) tuples for jobs currently running
+    """Get a list of (tool, job name, host, release) tuples for jobs currently running
     on the given grid."""
     p = {'purge': 1} if not cached else None
     r = requests.get(url,  params=p)
@@ -60,7 +65,8 @@ def gridengine_status(url, cached=False):
                 (
                     normalize_toolname(job['job_owner']),
                     job['job_name'],
-                    host
+                    host,
+                    job.get('release', 'default')
                 )
                 for job in info['jobs'].values()
             ])
@@ -74,7 +80,7 @@ def normalize_toolname(name):
     # else None -- we ignore non-tool accounts like 'root'
 
 
-def tools_members(tools, seen):
+def tools_members(tools):
     """
     Return a dict that has members of a tool associated with each tool
     Ex:
@@ -126,18 +132,22 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         date_fmt = '%Y-%m-%d %H:%M'
         tools = tools_from_accounting(remove_migrated, cached)
 
-        if remove_migrated:
-            grid_stretch = gridengine_status(
-                'https://tools.wmflabs.org/sge-status/api/v1/', cached)
-            for tool, name, host in grid_stretch:
-                if tool in tools and name in tools[tool]['jobs']:
-                    del tools[tool]['jobs'][name]
-                    if not tools[tool]['jobs']:
-                        del tools[tool]
+        grid_jobs = gridengine_status('https://sge-status.toolforge.org/api/v1', cached)
+        fetch_maintainers_from_ldap = []
 
-        grid_trusty = gridengine_status(
-            'https://tools.wmflabs.org/gridengine-status/', cached)
-        for tool, name, host in grid_trusty:
+        for tool, name, host, release in grid_jobs:
+            if release != 'buster':
+                continue
+            if tool in tools and name in tools[tool]['jobs']:
+                del tools[tool]['jobs'][name]
+                if not tools[tool]['jobs']:
+                    del tools[tool]
+
+        for tool, name, host, release in grid_jobs:
+            if release == 'buster':
+                # Oldest jobs do not have a release set, new ones have it as 'stretch'
+                # Skipping everything that is not buster is easiest
+                continue
             if not tool:
                 print('Discarding user job: {}@{}'.format(name, host))
                 continue
@@ -147,6 +157,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
                     'jobs': {},
                     'members': [],
                 }
+                fetch_maintainers_from_ldap.append(tool)
             if name not in tools[tool]['jobs']:
                 tools[tool]['jobs'][name] = {
                     'count': 0,
@@ -155,7 +166,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             tools[tool]['jobs'][name]['count'] += 1
             tools[tool]['jobs'][name]['last'] = 'Currently running'
 
-        for key, val in tools_members(tools.keys(), None).items():
+        for key, val in tools_members(fetch_maintainers_from_ldap).items():
             tools[key]['members'] = list(val)
 
         ctx = {

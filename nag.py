@@ -30,26 +30,25 @@ EXCLUDED_TOOLS = (
     'gridengine-status',
 )
 SERVER = 'mail.tools.wmflabs.org'
-REPLY_TO = 'Bryan Davis <bd808@tools.wmflabs.org>'
-SUBJECT = '[Toolforge] Tools you maintain are running on Trusty job grid'
+REPLY_TO = 'Bryan Davis <bd808@toolforge.org>'
+SUBJECT = '[Toolforge] Tools you maintain are running on Stretch job grid'
 MESSAGE = """\
 Hello {maintainer},
 
 This email is a reminder that the tools listed below have run jobs and/or
-webservices using the Ubuntu Trusty job grid in the past 7 days. This job grid
-will be shutdown on or before the week of 2019-03-25 as the final step in the
-removal of Ubuntu Trusty from Toolforge and the larger Cloud VPS environment.
+webservices using the Debian Stretch job grid in the past 7 days. This job grid
+will be shutdown TBD
 
 {tools}
 
-See <https://tools.wmflabs.org/trusty-tools/u/{maintainer}> for more details
+See <https://stretch-tools.toolforge.org/u/{maintainer}> for more details
 on these tools and the jobs that have been seen.
 
 Please see the migration instructions on Wikitech [0] for more information on
-how to move your tools to either the new Debian Stretch job grid or the
+how to move your tools to either the new Debian Buster job grid or the
 Kubernetes cluster.
 
-[0]: https://wikitech.wikimedia.org/wiki/News/Toolforge_Trusty_deprecation
+[0]: https://wikitech.wikimedia.org/wiki/News/Toolforge_Stretch_deprecation
 
 Thanks,
 The Toolforge admin team
@@ -58,7 +57,7 @@ The Toolforge admin team
 
 def get_maintainer_info():
     maintainers = collections.defaultdict(set)
-    r = requests.get('https://tools.wmflabs.org/trusty-tools/json')
+    r = requests.get('https://stretch-tools.toolforge.org/json')
     trusty_tools = r.json()
     for tool, data in trusty_tools['tools'].items():
         if tool in EXCLUDED_TOOLS:
@@ -75,9 +74,9 @@ def send_message(server, maintainer, tools):
     )
     msg = email.message.EmailMessage()
     msg.set_content(body)
-    msg['Sender'] = '<tools.trusty-tools@tools.wmflabs.org>'
-    msg['From'] = 'Toolforge admins <tools.admin@tools.wmflabs.org>'
-    msg['To'] = '<{}@tools.wmflabs.org>'.format(maintainer)
+    msg['Sender'] = '<tools.stretch-tools@toolforge.org>'
+    msg['From'] = 'Toolforge admins <tools.admin@toolforge.org>'
+    msg['To'] = '<{}@toolforge.org>'.format(maintainer)
     msg['Reply-To'] = REPLY_TO
     msg['Subject'] = SUBJECT
     server.send_message(msg)
@@ -94,6 +93,7 @@ def main():
 
 
 if __name__ == '__main__':
+    raise Error('NOT YET')
     main()
 
 # vim:sw=4:ts=4:sts=4:et:
