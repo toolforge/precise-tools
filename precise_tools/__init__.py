@@ -164,7 +164,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             tools[tool]['jobs'][name]['count'] += 1
             tools[tool]['jobs'][name]['last'] = 'Currently running'
 
-        for key, val in tools_members(tools.keys(), None).items():
+        for key, val in tools_members(tools.keys()).items():
             tools[key]['members'] = list(val)
 
         ctx = {
