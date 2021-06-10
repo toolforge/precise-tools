@@ -45,7 +45,6 @@ def tools_from_accounting(remove_migrated=True, cached=False):
         if len(jobs) != 0:
             tools[tool] = {
                 'jobs': jobs,
-                'members': data['members']
             }
 
     return tools
@@ -133,7 +132,6 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         tools = tools_from_accounting(remove_migrated, cached)
 
         grid_jobs = gridengine_status('https://sge-status.toolforge.org/api/v1', cached)
-        fetch_maintainers_from_ldap = []
 
         for tool, name, host, release in grid_jobs:
             if release != 'buster':
@@ -155,18 +153,18 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             if tool not in tools:
                 tools[tool] = {
                     'jobs': {},
-                    'members': [],
                 }
-                fetch_maintainers_from_ldap.append(tool)
+
             if name not in tools[tool]['jobs']:
                 tools[tool]['jobs'][name] = {
                     'count': 0,
                     'last': '',
                 }
+
             tools[tool]['jobs'][name]['count'] += 1
             tools[tool]['jobs'][name]['last'] = 'Currently running'
 
-        for key, val in tools_members(fetch_maintainers_from_ldap).items():
+        for key, val in tools_members(tools.keys(), None).items():
             tools[key]['members'] = list(val)
 
         ctx = {
