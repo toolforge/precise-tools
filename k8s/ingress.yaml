@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    name: grid-deprecation
+  name: grid-deprecation
+  namespace: tool-grid-deprecation
+spec:
+  rules:
+  - host: grid-deprecation.toolforge.org
+    http:
+      paths:
+      - backend:
+          service:
+            name: grid-deprecation
+            port:
+              number: 8000
+        path: /
+        pathType: Prefix

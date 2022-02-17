@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: grid-deprecation
+  name: grid-deprecation
+  namespace: tool-grid-deprecation
+spec:
+  ports:
+  - name: http
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    name: grid-deprecation
+  type: ClusterIP
