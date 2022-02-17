@@ -31,8 +31,8 @@ def get_k8s_workloads():
     """Gets a list of all workloads running on Kubernetes"""
     tools = collections.defaultdict(list)
 
-    deployments = kubernetes.get(
-        "/api/v1/deployments",
+    deployments = KUBERNETES.get(
+        "/apis/apps/v1/deployments",
         params={"limit": 5000},
     )["items"]
 
@@ -43,7 +43,7 @@ def get_k8s_workloads():
         namespace = namespace[5:]
         tools[namespace].append(deployment["metadata"]["name"])
 
-    cronjobs = kubernetes.get(
+    cronjobs = KUBERNETES.get(
         "/apis/batch/v1beta1/cronjobs",
         params={"limit": 5000},
     )["items"]
