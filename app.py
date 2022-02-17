@@ -3,6 +3,7 @@
 #
 # This file is part of precise-tools
 # Copyright (C) 2017 Bryan Davis and contributors
+# Copyright (C) 2022 Taavi Väänänen
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free

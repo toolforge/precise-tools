@@ -17,13 +17,45 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+import collections
 
 import requests
 
-from . import utils
+from . import kubernetes, utils
 
 CACHE = utils.Cache()
+KUBERNETES = kubernetes.KubernetesClient.create_inside_cluster()
 
+
+def get_k8s_workloads():
+    """Gets a list of all workloads running on Kubernetes"""
+    tools = collections.defaultdict(list)
+
+    deployments = kubernetes.get(
+        "/api/v1/deployments",
+        params={"limit": 5000},
+    )["items"]
+
+    for deployment in deployments:
+        namespace: str = deployment["metadata"]["namespace"]
+        if not namespace.startswith("tool-"):
+            continue
+        namespace = namespace[5:]
+        tools[namespace].append(deployment["metadata"]["name"])
+
+    cronjobs = kubernetes.get(
+        "/apis/batch/v1beta1/cronjobs",
+        params={"limit": 5000},
+    )["items"]
+
+    for cronjob in cronjobs:
+        namespace: str = cronjob["metadata"]["namespace"]
+        if not namespace.startswith("tool-"):
+            continue
+        namespace = namespace[5:]
+        tools[namespace].append(cronjob["metadata"]["name"])
+
+    return tools
 
 def tools_from_accounting(remove_migrated=True, cached=False):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
@@ -31,13 +63,18 @@ def tools_from_accounting(remove_migrated=True, cached=False):
     p = {'purge': 1} if not cached else None
     r = requests.get('https://sge-jobs.toolforge.org/json', params=p)
 
+    if remove_migrated:
+        k8s_workloads = get_k8s_workloads()
+    else:
+        k8s_workloads = {}
+
     tools = {}
 
     for tool, data in r.json()['tools'].items():
         jobs = {}
         for job_name, job in data['jobs'].items():
             if 'default' in job['per_release'].keys() or 'stretch' in job['per_release'].keys():
-                if (not remove_migrated) or ('buster' not in job['per_release'].keys()):
+                if (not remove_migrated) or ('buster' not in job['per_release'].keys() and job_name not in k8s_workloads.get(tool, [])):
                     jobs[job_name] = {
                         'count': job['count'],
                         'last': job['last'],
