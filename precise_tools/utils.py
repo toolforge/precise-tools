@@ -60,8 +60,8 @@ def ldap_conn():
     Return value can be used as a context manager
     """
     servers = ldap3.ServerPool([
-        ldap3.Server('ldap-labs.eqiad.wikimedia.org'),
-        ldap3.Server('ldap-labs.codfw.wikimedia.org'),
+        ldap3.Server('ldap-ro.eqiad.wikimedia.org'),
+        ldap3.Server('ldap-ro.codfw.wikimedia.org'),
     ], ldap3.ROUND_ROBIN, active=True, exhaust=True)
     return ldap3.Connection(
         servers, read_only=True, auto_bind=True)
