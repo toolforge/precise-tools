@@ -73,7 +73,7 @@ def tools_from_accounting(remove_migrated=True, cached=False):
     for tool, data in r.json()['tools'].items():
         jobs = {}
         for job_name, job in data['jobs'].items():
-            if 'default' in job['per_release'].keys() or 'stretch' in job['per_release'].keys():
+            if 'stretch' in job['per_release'].keys():
                 if (not remove_migrated) or ('buster' not in job['per_release'].keys() and job_name not in k8s_workloads.get(tool, [])):
                     jobs[job_name] = {
                         'count': job['count'],
