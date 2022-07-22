@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1>Tools maintained by {{user}} running jobs on Stretch grid engine in last 7 days</h1>
+<h1>Tools maintained by {{user}} running jobs on the grid engine in last 7 days</h1>
 
-<p>{{user}}'s tools still running on Stretch: <var>{{ tools|count }}</var></p>
+<p>{{user}}'s tools still running on the grid engine: <var>{{ tools|count }}</var></p>
 <p>Last updated: <var>{{ generated }}</var></p>
 
 <table id="precise">

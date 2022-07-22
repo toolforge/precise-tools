@@ -1,10 +1,22 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1>Tools running jobs on Stretch grid engine in last 7 days</h1>
+<h1>Tools running jobs on the grid engine in last 7 days</h1>
 
-<p>See <a href="https://wikitech.wikimedia.org/wiki/News/Toolforge_Stretch_deprecation">Toolforge Stretch deprecation</a> for information on migrating your tool off of Stretch before the deadline.</p>
+<p>
+  The Toolforge administration team is working on eventually removing
+  support for the <a href="https://wikitech.wikimedia.org/wiki/Help:Toolforge/Grid">
+  Grid engine</a> in favor of the more modern <a href="https://wikitech.wikimedia.org/wiki/Help:Toolforge/Kubernetes">
+  Kubernetes</a> platform.
+</p>
 
-<p>Total tools still running on Stretch: <var>{{ tools|count }}</var></p>
+<p>
+  This page was used to track tools running an older version of the grid engine.
+  The Stretch grid engine cluster has now been shut down, and tools that weren't
+  migrated by their maintainers were either migrated by the Toolforge admins or
+  entirely shut down if they didn't seem to run properly on Buster.
+</p>
+
+<p>Total tools still running on the grid engine: <var>{{ tools|count }}</var></p>
 <p>Last updated: <var>{{ generated }}</var></p>
 
 <table id="precise">

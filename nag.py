@@ -57,7 +57,7 @@ The Toolforge admin team
 
 def get_maintainer_info():
     maintainers = collections.defaultdict(set)
-    r = requests.get('https://stretch-tools.toolforge.org/json')
+    r = requests.get('https://grid-deprecation.toolforge.org/json')
     trusty_tools = r.json()
     for tool, data in trusty_tools['tools'].items():
         if tool in EXCLUDED_TOOLS:
@@ -74,7 +74,7 @@ def send_message(server, maintainer, tools):
     )
     msg = email.message.EmailMessage()
     msg.set_content(body)
-    msg['Sender'] = '<tools.stretch-tools@toolforge.org>'
+    msg['Sender'] = '<tools.grid-deprecation@toolforge.org>'
     msg['From'] = 'Toolforge admins <tools.admin@toolforge.org>'
     msg['To'] = '<{}@toolforge.org>'.format(maintainer)
     msg['Reply-To'] = REPLY_TO

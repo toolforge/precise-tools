@@ -28,7 +28,7 @@ import precise_tools
 
 
 app = flask.Flask(__name__)
-toolforge.set_user_agent('stretch-tools')
+toolforge.set_user_agent('grid-deprecation')
 
 
 @app.route('/')

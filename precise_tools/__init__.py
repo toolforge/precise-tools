@@ -73,12 +73,12 @@ def tools_from_accounting(remove_migrated=True, cached=False):
     for tool, data in r.json()['tools'].items():
         jobs = {}
         for job_name, job in data['jobs'].items():
-            if 'stretch' in job['per_release'].keys():
-                if (not remove_migrated) or ('buster' not in job['per_release'].keys() and job_name not in k8s_workloads.get(tool, [])):
-                    jobs[job_name] = {
-                        'count': job['count'],
-                        'last': job['last'],
-                    }
+            if (not remove_migrated) or (job_name not in k8s_workloads.get(tool, [])):
+                jobs[job_name] = {
+                    'count': job['count'],
+                    'last': job['last'],
+                }
+
         if len(jobs) != 0:
             tools[tool] = {
                 'jobs': jobs,
@@ -171,18 +171,6 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         grid_jobs = gridengine_status('https://sge-status.toolforge.org/api/v1', cached)
 
         for tool, name, host, release in grid_jobs:
-            if release != 'buster':
-                continue
-            if tool in tools and name in tools[tool]['jobs']:
-                del tools[tool]['jobs'][name]
-                if not tools[tool]['jobs']:
-                    del tools[tool]
-
-        for tool, name, host, release in grid_jobs:
-            if release == 'buster':
-                # Oldest jobs do not have a release set, new ones have it as 'stretch'
-                # Skipping everything that is not buster is easiest
-                continue
             if not tool:
                 print('Discarding user job: {}@{}'.format(name, host))
                 continue
