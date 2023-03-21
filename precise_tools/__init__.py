@@ -57,6 +57,15 @@ def get_k8s_workloads():
 
     return tools
 
+def is_migrated(tool_name, job_name, job, k8s_jobs):
+    if (
+        job["queue"] == ["webgrid-lighttpd"] or job["queue"] == ["webgrid-generic"]
+        and tool_name in k8s_jobs
+    ):
+        return True
+
+    return job_name in k8s_jobs
+
 def tools_from_accounting(remove_migrated=True, cached=False):
     """Get a list of (tool, job name, count, last) tuples for jobs running on
     trusty exec nodes in the last 7 days."""
@@ -73,7 +82,7 @@ def tools_from_accounting(remove_migrated=True, cached=False):
     for tool, data in r.json()['tools'].items():
         jobs = {}
         for job_name, job in data['jobs'].items():
-            if (not remove_migrated) or (job_name not in k8s_workloads.get(tool, [])):
+            if not is_migrated(tool, job_name, job, k8s_workloads.get(tool, [])):
                 jobs[job_name] = {
                     'count': job['count'],
                     'last': job['last'],
