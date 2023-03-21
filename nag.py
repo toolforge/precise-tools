@@ -93,7 +93,7 @@ def main():
 
 
 if __name__ == '__main__':
-    raise Error('NOT YET')
+    raise Exception('NOT YET')
     main()
 
 # vim:sw=4:ts=4:sts=4:et:

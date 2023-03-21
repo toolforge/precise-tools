@@ -28,69 +28,70 @@ import precise_tools
 
 
 app = flask.Flask(__name__)
-toolforge.set_user_agent('grid-deprecation')
+toolforge.set_user_agent("grid-deprecation")
 
 
-@app.route('/')
+@app.route("/")
 def home():
     try:
-        cached = 'purge' not in flask.request.args
-        remove_migrated = 'all' not in flask.request.args
+        cached = "purge" not in flask.request.args
+        remove_migrated = "all" not in flask.request.args
         ctx = precise_tools.get_view_data(
-            cached=cached, remove_migrated=remove_migrated)
-        return flask.render_template('home.html', **ctx)
+            cached=cached, remove_migrated=remove_migrated
+        )
+        return flask.render_template("home.html", **ctx)
     except Exception:
         traceback.print_exc()
         raise
 
 
-@app.route('/u/<user>')
+@app.route("/u/<user>")
 def user(user):
     try:
-        cached = 'purge' not in flask.request.args
-        remove_migrated = 'all' not in flask.request.args
+        cached = "purge" not in flask.request.args
+        remove_migrated = "all" not in flask.request.args
         ctx = precise_tools.get_view_data(
-            cached=cached, remove_migrated=remove_migrated)
-        for tool in list(ctx['tools']):
-            if user not in ctx['tools'][tool]['members']:
-                del ctx['tools'][tool]
-        return flask.render_template('user.html', user=user, **ctx)
+            cached=cached, remove_migrated=remove_migrated
+        )
+        for tool in list(ctx["tools"]):
+            if user not in ctx["tools"][tool]["members"]:
+                del ctx["tools"][tool]
+        return flask.render_template("user.html", user=user, **ctx)
     except Exception:
         traceback.print_exc()
         raise
 
 
-@app.route('/t/<name>')
+@app.route("/t/<name>")
 def tool(name):
     try:
-        cached = 'purge' not in flask.request.args
-        remove_migrated = 'all' not in flask.request.args
+        cached = "purge" not in flask.request.args
+        remove_migrated = "all" not in flask.request.args
         ctx = precise_tools.get_view_data(
-            cached=cached, remove_migrated=remove_migrated)
-        for tool in list(ctx['tools']):
+            cached=cached, remove_migrated=remove_migrated
+        )
+        for tool in list(ctx["tools"]):
             if tool != name:
-                del ctx['tools'][tool]
-        return flask.render_template('tool.html', name=name, **ctx)
+                del ctx["tools"][tool]
+        return flask.render_template("tool.html", name=name, **ctx)
     except Exception:
         traceback.print_exc()
         raise
 
 
-@app.route('/json')
+@app.route("/json")
 def json_dump():
     try:
-        cached = 'purge' not in flask.request.args
+        cached = "purge" not in flask.request.args
         return flask.json.jsonify(
-            precise_tools.get_view_data(
-                cached=cached, remove_migrated=True
-            )
+            precise_tools.get_view_data(cached=cached, remove_migrated=True)
         )
     except Exception:
         traceback.print_exc()
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()
 
 # vim:sw=4:ts=4:sts=4:et:

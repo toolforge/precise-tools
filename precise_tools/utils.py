@@ -30,18 +30,19 @@ import redis
 class Cache(object):
     def __init__(self, enabled=True):
         self.enabled = enabled
-        self.conn = redis.Redis(host='tools-redis', decode_responses=True)
+        self.conn = redis.Redis(host="tools-redis", decode_responses=True)
         u = pwd.getpwuid(os.getuid())
         self.prefix = hashlib.sha1(
-            '{}.{}'.format(u.pw_name, u.pw_dir).encode('utf-8')).hexdigest()
+            "{}.{}".format(u.pw_name, u.pw_dir).encode("utf-8")
+        ).hexdigest()
 
     def key(self, val):
-        return '%s%s' % (self.prefix, val)
+        return "%s%s" % (self.prefix, val)
 
     def load(self, key):
         if self.enabled:
             try:
-                return json.loads(self.conn.get(self.key(key)) or '')
+                return json.loads(self.conn.get(self.key(key)) or "")
             except ValueError:
                 return None
         else:
@@ -59,32 +60,36 @@ def ldap_conn():
 
     Return value can be used as a context manager
     """
-    servers = ldap3.ServerPool([
-        ldap3.Server('ldap-ro.eqiad.wikimedia.org'),
-        ldap3.Server('ldap-ro.codfw.wikimedia.org'),
-    ], ldap3.ROUND_ROBIN, active=True, exhaust=True)
-    return ldap3.Connection(
-        servers, read_only=True, auto_bind=True)
+    servers = ldap3.ServerPool(
+        [
+            ldap3.Server("ldap-ro.eqiad.wikimedia.org"),
+            ldap3.Server("ldap-ro.codfw.wikimedia.org"),
+        ],
+        ldap3.ROUND_ROBIN,
+        active=True,
+        exhaust=True,
+    )
+    return ldap3.Connection(servers, read_only=True, auto_bind=True)
 
 
 def find_members(conn, tool, seen):
     members = set()
     entries = conn.extend.standard.paged_search(
-        search_base='ou=servicegroups,dc=wikimedia,dc=org',
-        search_filter='(cn=tools.{})'.format(tool),
+        search_base="ou=servicegroups,dc=wikimedia,dc=org",
+        search_filter="(cn=tools.{})".format(tool),
         search_scope=ldap3.SUBTREE,
-        attributes=['member', 'cn'],
+        attributes=["member", "cn"],
         time_limit=5,
         paged_size=256,
         generator=True,
     )
     for entry in entries:
-        for member in entry['attributes'].get('member', []):
+        for member in entry["attributes"].get("member", []):
             uid = uid_from_dn(member)
-            if uid.startswith('tools.'):
+            if uid.startswith("tools."):
                 nested = uid[6:]
                 if nested == tool:
-                    print('Tool {} is a member of itself!!'.format(tool))
+                    print("Tool {} is a member of itself!!".format(tool))
                     continue
                 if nested not in seen:
                     seen.append(nested)
@@ -95,7 +100,7 @@ def find_members(conn, tool, seen):
 
 
 def uid_from_dn(dn):
-    keys = dn.split(',')
+    keys = dn.split(",")
     uid_key = keys[0]
-    uid = uid_key.split('=')[1]
+    uid = uid_key.split("=")[1]
     return uid

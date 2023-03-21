@@ -14,7 +14,9 @@ class KubernetesClient:
 
     @staticmethod
     def create_inside_cluster():
-        with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r") as token_file:
+        with open(
+            "/var/run/secrets/kubernetes.io/serviceaccount/token", "r"
+        ) as token_file:
             token = token_file.read()
         return KubernetesClient(
             "https://kubernetes.default.svc",
