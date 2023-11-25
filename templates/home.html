@@ -1,22 +1,14 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1>Tools running jobs on the grid engine in last 7 days</h1>
+<h1>Tools running jobs on the Grid Engine in last 7 days</h1>
 
 <p>
-  The Toolforge administration team is working on eventually removing
-  support for the <a href="https://wikitech.wikimedia.org/wiki/Help:Toolforge/Grid">
-  Grid engine</a> in favor of the more modern <a href="https://wikitech.wikimedia.org/wiki/Help:Toolforge/Kubernetes">
-  Kubernetes</a> platform.
+  <strong>The Toolforge Grid Engine is deprecated and planned to be shut down in early 2024.</strong>
+  You should migrate any tools still running on the Grid Engine to newer runtimes.
+  For details, see <a href="https://wikitech.wikimedia.org/wiki/News/Toolforge_Grid_Engine_deprecation">News/Toolforge Grid Engine deprecation.</a>
 </p>
 
-<p>
-  This page was used to track tools running an older version of the grid engine.
-  The Stretch grid engine cluster has now been shut down, and tools that weren't
-  migrated by their maintainers were either migrated by the Toolforge admins or
-  entirely shut down if they didn't seem to run properly on Buster.
-</p>
-
-<p>Total tools still running on the grid engine: <var>{{ tools|count }}</var></p>
+<p>Total tools still running on the Grid Engine: <var>{{ tools|count }}</var></p>
 <p>Last updated: <var>{{ generated }}</var></p>
 
 <table id="precise">
