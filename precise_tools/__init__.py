@@ -71,7 +71,7 @@ def get_disabled_tools() -> list[str]:
             generator=True,
         )
 
-        return [normalize_toolname(entry["uid"][0]) for entry in entries]
+        return [normalize_toolname(entry["attributes"]["uid"][0]) for entry in entries]
 
 
 def is_migrated(tool_name, job_name, job, k8s_jobs):
