@@ -19,6 +19,7 @@
 import collections
 import datetime
 
+import ldap3
 import requests
 
 from . import kubernetes, utils
@@ -58,6 +59,21 @@ def get_k8s_workloads():
     return tools
 
 
+def get_disabled_tools() -> list[str]:
+    with utils.ldap_conn() as conn:
+        entries = conn.extend.standard.paged_search(
+            search_base="ou=servicegroups,dc=wikimedia,dc=org",
+            search_filter="(pwdPolicySubentry=cn=disabled,ou=ppolicies,dc=wikimedia,dc=org)",
+            search_scope=ldap3.SUBTREE,
+            attributes=["uid"],
+            time_limit=5,
+            paged_size=256,
+            generator=True,
+        )
+
+        return [normalize_toolname(entry["uid"][0]) for entry in entries]
+
+
 def is_migrated(tool_name, job_name, job, k8s_jobs):
     if (
         job["queues"] == ["webgrid-lighttpd"]
@@ -77,12 +93,17 @@ def tools_from_accounting(remove_migrated=True, cached=False):
 
     if remove_migrated:
         k8s_workloads = get_k8s_workloads()
+        disabled_tools = get_disabled_tools()
     else:
         k8s_workloads = {}
+        disabled_tools = []
 
     tools = {}
 
     for tool, data in r.json()["tools"].items():
+        if remove_migrated and tool in disabled_tools:
+            continue
+
         jobs = {}
         for job_name, job in data["jobs"].items():
             if not is_migrated(tool, job_name, job, k8s_workloads.get(tool, [])):
