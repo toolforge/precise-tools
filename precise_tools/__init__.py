@@ -99,9 +99,11 @@ def tools_from_accounting(remove_migrated=True, cached=False):
         disabled_tools = []
 
     tools = {}
+    migrated = set()
 
     for tool, data in r.json()["tools"].items():
-        if remove_migrated and tool in disabled_tools:
+        if tool in disabled_tools:
+            migrated.add(tool)
             continue
 
         jobs = {}
@@ -116,8 +118,10 @@ def tools_from_accounting(remove_migrated=True, cached=False):
             tools[tool] = {
                 "jobs": jobs,
             }
+        elif len(data["jobs"]) != 0:
+            migrated.add(tool)
 
-    return tools
+    return tools, migrated
 
 
 def gridengine_status(url, cached=False):
@@ -200,7 +204,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
     ctx = CACHE.load(cache_key) if cached else None
     if ctx is None:
         date_fmt = "%Y-%m-%d %H:%M"
-        tools = tools_from_accounting(remove_migrated, cached)
+        tools, migrated = tools_from_accounting(remove_migrated, cached)
 
         grid_jobs = gridengine_status("https://sge-status.toolforge.org/api/v1", cached)
 
@@ -208,6 +212,9 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             if not tool:
                 print("Discarding user job: {}@{}".format(name, host))
                 continue
+
+            if tool in migrated:
+                migrated.remove(tool)
 
             if tool not in tools:
                 tools[tool] = {
@@ -229,6 +236,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         ctx = {
             "generated": datetime.datetime.now().strftime(date_fmt),
             "tools": tools,
+            "migrated": list(migrated),
         }
         CACHE.save(cache_key, ctx)
     return ctx
