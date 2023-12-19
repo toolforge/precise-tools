@@ -18,6 +18,7 @@
 
 import collections
 import datetime
+from pathlib import Path
 
 import ldap3
 import requests
@@ -200,6 +201,8 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
         }
     """
 
+    tool_base_path = Path("/data/project")
+
     cache_key = "maindict:days={}:remove_migrated={}".format(days, remove_migrated)
     ctx = CACHE.load(cache_key) if cached else None
     if ctx is None:
@@ -232,6 +235,9 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
 
         for key, val in tools_members(tools.keys()).items():
             tools[key]["members"] = list(val)
+            tools[key]["disabled"] = not (
+                tool_base_path / key / "TOOL_DISABLED"
+            ).exists()
 
         ctx = {
             "generated": datetime.datetime.now().strftime(date_fmt),
