@@ -26,6 +26,10 @@
     <tr>
       <td rowspan="{{ tool_data.jobs|count }}" id="{{ tool_name }}" class="tool-name">
         <a href="{{ url_for('tool', name=tool_name) }}">{{ tool_name }}</a>
+        {% if tool_data.disabled %}
+          (grid access disabled)
+        {% endif %}
+
         <div class='members'>
           members:
           <ul>
