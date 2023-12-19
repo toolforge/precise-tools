@@ -239,7 +239,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             tools[key]["members"] = list(val)
 
             try:
-                tools[key]["disabled"] = not (
+                tools[key]["disabled"] = (
                     tool_base_path / key / "TOOL_DISABLED"
                 ).exists()
             except PermissionError:
