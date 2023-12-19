@@ -118,6 +118,7 @@ def tools_from_accounting(remove_migrated=True, cached=False):
         if len(jobs) != 0:
             tools[tool] = {
                 "jobs": jobs,
+                "disabled": False,
             }
         elif len(data["jobs"]) != 0:
             migrated.add(tool)
@@ -222,6 +223,7 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
             if tool not in tools:
                 tools[tool] = {
                     "jobs": {},
+                    "disabled": False,
                 }
 
             if name not in tools[tool]["jobs"]:
@@ -235,9 +237,13 @@ def get_view_data(days=7, cached=True, remove_migrated=True):
 
         for key, val in tools_members(tools.keys()).items():
             tools[key]["members"] = list(val)
-            tools[key]["disabled"] = not (
-                tool_base_path / key / "TOOL_DISABLED"
-            ).exists()
+
+            try:
+                tools[key]["disabled"] = not (
+                    tool_base_path / key / "TOOL_DISABLED"
+                ).exists()
+            except PermissionError:
+                pass
 
         ctx = {
             "generated": datetime.datetime.now().strftime(date_fmt),
